@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TabFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,300&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #07070d;
+      --violet:       #8b5cf6;
+      --violet-mid:   rgba(139, 92, 246, 0.45);
+      --violet-soft:  rgba(139, 92, 246, 0.18);
+      --text:         rgba(255, 255, 255, 0.92);
+      --text-dim:     rgba(255, 255, 255, 0.38);
+      --card-w:       176px;
+      --card-h:       224px;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'Syne', sans-serif;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    /* Ambient stage glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 700px;
+      height: 420px;
+      background: radial-gradient(ellipse, rgba(88, 28, 135, 0.13) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      z-index: 10;
+      text-align: center;
+      margin-bottom: 26px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .logo {
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: 28px;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .logo .v { color: var(--violet); }
+
+    /* ── SEARCH ── */
+    .search-wrap {
+      position: relative;
+      z-index: 10;
+      margin-bottom: 40px;
+      animation: fadeUp 0.5s 0.07s ease both;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+
+    .search {
+      width: 256px;
+      height: 40px;
+      padding: 0 18px 0 40px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 20px;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search:focus {
+      border-color: var(--violet-mid);
+      box-shadow: 0 0 0 3px var(--violet-soft);
+    }
+
+    .search::placeholder { color: var(--text-dim); }
+
+    /* ── CAROUSEL AREA ── */
+    .stage-wrap {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      height: 272px;
+      perspective: 1100px;
+      perspective-origin: 50% 50%;
+      flex-shrink: 0;
+      animation: fadeUp 0.55s 0.13s ease both;
+    }
+
+    /* Zero-width anchor centered horizontally; cards spread from here */
+    .cards {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      transform-style: preserve-3d;
+    }
+
+    /* ── CARD ── */
+    .card {
+      position: absolute;
+      top: calc((272px - var(--card-h)) / 2);
+      left: calc(var(--card-w) / -2);
+      width: var(--card-w);
+      height: var(--card-h);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 13px;
+      padding: 20px 14px;
+      cursor: pointer;
+      /* ease-out-expo: fast start, smooth landing — authentic Cover Flow feel */
+      transition:
+        transform    0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity      0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 0.28s ease,
+        box-shadow   0.28s ease;
+      will-change: transform, opacity;
+    }
+
+    .card.is-active {
+      border-color: rgba(139, 92, 246, 0.5);
+      box-shadow:
+        0 0 28px rgba(139, 92, 246, 0.38),
+        0 0 60px rgba(139, 92, 246, 0.14),
+        0 18px 44px rgba(0, 0, 0, 0.65);
+    }
+
+    /* Favicon container — the "hero" of each card */
+    .fav-ring {
+      width: 88px;
+      height: 88px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+
+    .is-active .fav-ring {
+      background: rgba(139, 92, 246, 0.1);
+      border-color: rgba(139, 92, 246, 0.2);
+    }
+
+    .fav-img {
+      width: 54px;
+      height: 54px;
+      object-fit: contain;
+      border-radius: 10px;
+    }
+
+    .fav-fallback {
+      width: 54px;
+      height: 54px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.75);
+      text-align: center;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4;
+    }
+
+    .is-active .card-title { color: #fff; }
+
+    .card-domain {
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--text-dim);
+      text-align: center;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── SHELF ── */
+    .shelf {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(
+        to right,
+        transparent,
+        rgba(139, 92, 246, 0.12) 20%,
+        rgba(139, 92, 246, 0.28) 50%,
+        rgba(139, 92, 246, 0.12) 80%,
+        transparent
+      );
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ── DETAIL STRIP (active tab full title) ── */
+    .detail {
+      z-index: 10;
+      margin-top: 18px;
+      height: 18px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-dim);
+      letter-spacing: 0.01em;
+      max-width: 480px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 24px;
+      animation: fadeUp 0.5s 0.2s ease both;
+    }
+
+    .detail .hl {
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--text-dim);
+      font-size: 13px;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .empty.show { display: block; }
+
+    /* ── FOOTER ── */
+    .footer {
+      z-index: 10;
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      animation: fadeUp 0.5s 0.26s ease both;
+    }
+
+    .counter {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .counter .n { color: var(--violet); font-weight: 700; }
+
+    .hints {
+      display: flex;
+      gap: 16px;
+    }
+
+    .hint {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .key {
+      padding: 2px 7px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom-width: 2px;
+      border-radius: 5px;
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.5);
+      font-family: 'Syne', sans-serif;
+    }
+
+    /* ── OPEN FLASH ── */
+    @keyframes openFlash {
+      0%   { box-shadow: 0 0 28px rgba(139,92,246,.38), 0 0 60px rgba(139,92,246,.14), 0 18px 44px rgba(0,0,0,.65); }
+      45%  { box-shadow: 0 0 60px rgba(139,92,246,.8),  0 0 120px rgba(139,92,246,.5), 0 18px 44px rgba(0,0,0,.65); border-color: rgba(139,92,246,0.9); }
+      100% { box-shadow: 0 0 28px rgba(139,92,246,.38), 0 0 60px rgba(139,92,246,.14), 0 18px 44px rgba(0,0,0,.65); }
+    }
+
+    .card.flash { animation: openFlash 0.38s ease; }
+
+    /* ── DRAG-TO-CLOSE ── */
+    .card.will-close {
+      border-color: rgba(239, 68, 68, 0.65) !important;
+      box-shadow:
+        0 0 22px rgba(239, 68, 68, 0.45),
+        0 0 48px rgba(239, 68, 68, 0.15) !important;
+    }
+
+    /* ── ENTRY ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">Tab<span class="v">Flow</span></div>
+  </div>
+
+  <div class="search-wrap">
+    <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input class="search" type="text" id="search" placeholder="Filter tabs…"
+           autocomplete="off" spellcheck="false">
+  </div>
+
+  <div class="stage-wrap" id="stageWrap">
+    <div class="cards" id="cards"></div>
+    <div class="shelf"></div>
+    <div class="empty" id="empty">No tabs match</div>
+  </div>
+
+  <div class="detail" id="detail"></div>
+
+  <div class="footer">
+    <div class="counter">
+      <span class="n" id="cur">1</span> of <span id="tot">12</span>
+    </div>
+    <div class="hints">
+      <div class="hint"><span class="key">←</span><span class="key">→</span>&nbsp;navigate</div>
+      <div class="hint"><span class="key">↵</span>&nbsp;open</div>
+      <div class="hint"><span class="key">/</span>&nbsp;search</div>
+      <div class="hint"><span class="key">Esc</span>&nbsp;close</div>
+    </div>
+  </div>
+
+  <script>
+    // ── Mock tab data (replaced by chrome.tabs.query in extension) ──────────
+    const ALL_TABS = [
+      { id:  1, title: 'GitHub — Where the world builds software',    domain: 'github.com',            color: '#24292e' },
+      { id:  2, title: 'Inbox (3) — Gmail',                          domain: 'mail.google.com',       color: '#EA4335' },
+      { id:  3, title: 'YouTube',                                     domain: 'youtube.com',           color: '#FF0000' },
+      { id:  4, title: 'Figma — Design & collaborate',               domain: 'figma.com',             color: '#F24E1E' },
+      { id:  5, title: 'ChatGPT',                                     domain: 'chat.openai.com',       color: '#10a37f' },
+      { id:  6, title: 'Stack Overflow — Where Developers Learn',     domain: 'stackoverflow.com',     color: '#F48024' },
+      { id:  7, title: 'X (formerly Twitter)',                        domain: 'x.com',                 color: '#111' },
+      { id:  8, title: 'Notion — Connected workspace',               domain: 'notion.so',             color: '#444' },
+      { id:  9, title: 'Linear — Build software the right way',      domain: 'linear.app',            color: '#5E6AD2' },
+      { id: 10, title: 'Vercel — Build and deploy the best web',     domain: 'vercel.com',            color: '#000' },
+      { id: 11, title: 'MDN Web Docs',                               domain: 'developer.mozilla.org', color: '#FF9400' },
+      { id: 12, title: 'Reddit — The front page of the internet',    domain: 'reddit.com',            color: '#FF4500' },
+    ];
+
+    // ── Cover Flow position configs per distance from center ────────────────
+    //   tx  = X translation (px)
+    //   tz  = Z translation (px, negative = recede)
+    //   ry  = Y rotation magnitude (deg); sign applied based on offset direction
+    //   sc  = scale
+    //   op  = opacity
+    //   zi  = z-index
+    const POSITIONS = [
+      { tx:   0, tz:   0, ry:  0,  sc: 1.00, op: 1.00, zi: 100 }, // center
+      { tx: 220, tz: -55, ry: 52,  sc: 0.84, op: 0.88, zi:  90 }, // ±1
+      { tx: 384, tz:-125, ry: 64,  sc: 0.69, op: 0.62, zi:  80 }, // ±2
+      { tx: 502, tz:-188, ry: 71,  sc: 0.56, op: 0.38, zi:  70 }, // ±3
+      { tx: 588, tz:-238, ry: 75,  sc: 0.46, op: 0.16, zi:  60 }, // ±4+
+    ];
+
+    // ── State ────────────────────────────────────────────────────────────────
+    let filtered = [...ALL_TABS];
+    let active   = 0;
+    let cardEls  = [];   // persistent DOM refs — never destroyed on navigate
+
+    // ── DOM refs ─────────────────────────────────────────────────────────────
+    const cardsEl  = document.getElementById('cards');
+    const searchEl = document.getElementById('search');
+    const curEl    = document.getElementById('cur');
+    const totEl    = document.getElementById('tot');
+    const emptyEl  = document.getElementById('empty');
+    const detailEl = document.getElementById('detail');
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function favUrl(domain) {
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+    }
+
+    function getPos(offset) {
+      const idx  = Math.min(Math.abs(offset), POSITIONS.length - 1);
+      const sign = Math.sign(offset);
+      const p    = POSITIONS[idx];
+      return {
+        tx: sign * p.tx,
+        tz: p.tz,
+        // Left cards: positive rotateY → right face tilts toward viewer
+        // Right cards: negative rotateY → left face tilts toward viewer
+        ry: sign * -p.ry,
+        sc: p.sc,
+        op: p.op,
+        zi: p.zi,
+      };
+    }
+
+    // ── buildCards: create DOM once (on init or after filtering) ─────────────
+    function buildCards() {
+      cardsEl.innerHTML = '';
+      cardEls = [];
+
+      if (filtered.length === 0) {
+        emptyEl.classList.add('show');
+        curEl.textContent = '0';
+        totEl.textContent = '0';
+        detailEl.innerHTML = '';
+        return;
+      }
+
+      emptyEl.classList.remove('show');
+
+      filtered.forEach((t, i) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        // Favicon ring
+        const ring = document.createElement('div');
+        ring.className = 'fav-ring';
+
+        const img = document.createElement('img');
+        img.className = 'fav-img';
+        img.src = favUrl(t.domain);
+        img.alt = t.title;
+        img.onerror = function () {
+          this.remove();
+          const fb = document.createElement('div');
+          fb.className = 'fav-fallback';
+          fb.style.background = t.color || '#333';
+          fb.textContent = t.domain[0].toUpperCase();
+          ring.appendChild(fb);
+        };
+        ring.appendChild(img);
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'card-title';
+        titleEl.textContent = t.title;
+
+        const domainEl = document.createElement('div');
+        domainEl.className = 'card-domain';
+        domainEl.textContent = t.domain;
+
+        card.appendChild(ring);
+        card.appendChild(titleEl);
+        card.appendChild(domainEl);
+
+        // Drag-to-close + click (click ignored if it was a drag)
+        card.addEventListener('mousedown',  e => initDrag(e, i));
+        card.addEventListener('touchstart', e => initDrag(e, i), { passive: false });
+        card.addEventListener('click', () => {
+          if (drag.moved) return;
+          if (i === active) openTab();
+          else { active = i; updatePositions(); }
+        });
+
+        cardsEl.appendChild(card);
+        cardEls.push(card);
+      });
+
+      // Set initial positions instantly (no animation on first paint)
+      updatePositions({ instant: true });
+    }
+
+    // ── updatePositions: only mutate styles — CSS transition does the rest ───
+    //   instant: true  → suppress transition for first render / filter changes
+    function updatePositions({ instant = false } = {}) {
+      if (!cardEls.length) return;
+
+      curEl.textContent = active + 1;
+      totEl.textContent = filtered.length;
+
+      const tab = filtered[active];
+      detailEl.innerHTML = `<span class="hl">${tab.title}</span> &nbsp;·&nbsp; ${tab.domain}`;
+
+      cardEls.forEach((card, i) => {
+        const offset = i - active;
+        const { tx, tz, ry, sc, op, zi } = getPos(offset);
+        const far = Math.abs(offset) > 4;
+
+        if (instant) card.style.transition = 'none';
+
+        card.style.transform  = `translateX(${tx}px) translateZ(${tz}px) rotateY(${ry}deg) scale(${sc})`;
+        card.style.opacity    = far ? '0' : op;
+        card.style.zIndex     = zi;
+        card.style.pointerEvents = far ? 'none' : 'auto';
+        card.classList.toggle('is-active', i === active);
+
+        if (instant) {
+          // Force reflow so the "no transition" frame commits, then restore
+          card.offsetHeight;
+          card.style.transition = '';
+        }
+      });
+    }
+
+    // ── Navigation ───────────────────────────────────────────────────────────
+    function go(dir) {
+      if (!filtered.length) return;
+      active = Math.max(0, Math.min(filtered.length - 1, active + dir));
+      updatePositions();
+    }
+
+    function openTab() {
+      const tab = filtered[active];
+      if (!tab) return;
+
+      const activeCard = cardEls[active];
+      if (activeCard) {
+        activeCard.classList.add('flash');
+        activeCard.addEventListener('animationend', () => activeCard.classList.remove('flash'), { once: true });
+      }
+
+      // In extension: chrome.tabs.update(tab.id, { active: true }); window.close();
+      console.log(`[TabFlow] → ${tab.title}  (${tab.domain})`);
+    }
+
+    // ── Keyboard ─────────────────────────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+      const inSearch = document.activeElement === searchEl;
+
+      if (inSearch) {
+        if (e.key === 'Escape')          { searchEl.value = ''; searchEl.blur(); applyFilter(''); }
+        else if (e.key === 'Enter')      { searchEl.blur(); openTab(); }
+        else if (e.key === 'ArrowLeft')  { e.preventDefault(); searchEl.blur(); go(-1); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); searchEl.blur(); go(1); }
+        return;
+      }
+
+      switch (e.key) {
+        case 'ArrowLeft':  e.preventDefault(); go(-1); break;
+        case 'ArrowRight': e.preventDefault(); go(1);  break;
+        case 'Enter':      e.preventDefault(); openTab(); break;
+        case 'Escape':     e.preventDefault(); console.log('[TabFlow] close'); break;
+        case '/':          e.preventDefault(); searchEl.focus(); break;
+      }
+    });
+
+    // ── Search / filter ──────────────────────────────────────────────────────
+    function applyFilter(q) {
+      const query = q.toLowerCase().trim();
+      filtered = query
+        ? ALL_TABS.filter(t =>
+            t.title.toLowerCase().includes(query) ||
+            t.domain.toLowerCase().includes(query))
+        : [...ALL_TABS];
+      active = 0;
+      buildCards();   // rebuild DOM for new tab set; positions set instantly
+    }
+
+    searchEl.addEventListener('input', e => applyFilter(e.target.value));
+
+    // ── Trackpad / mouse-wheel ────────────────────────────────────────────────
+    let wheelLock = false;
+    document.addEventListener('wheel', e => {
+      if (wheelLock || document.activeElement === searchEl) return;
+      wheelLock = true;
+      setTimeout(() => { wheelLock = false; }, 290);
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      go(delta > 0 ? 1 : -1);
+    }, { passive: true });
+
+    // ── Drag-to-close ─────────────────────────────────────────────────────────
+    const DRAG_CLOSE = 85;  // px from origin to trigger close
+    const drag = { on: false, idx: -1, x0: 0, y0: 0, base: null, moved: false };
+
+    function initDrag(e, idx) {
+      if (e.button !== undefined && e.button !== 0) return; // left button only
+      e.preventDefault();
+      const p    = e.touches ? e.touches[0] : e;
+      drag.on    = true;
+      drag.idx   = idx;
+      drag.x0    = p.clientX;
+      drag.y0    = p.clientY;
+      drag.base  = getPos(idx - active);
+      drag.moved = false;
+      const card = cardEls[idx];
+      // Keep border/glow transitions but suppress movement transition during drag
+      card.style.transition = 'border-color 0.15s ease, box-shadow 0.15s ease';
+      card.style.zIndex = '200';
+    }
+
+    function moveDrag(e) {
+      if (!drag.on) return;
+      const p  = e.touches ? e.touches[0] : e;
+      const dx = p.clientX - drag.x0;
+      const dy = p.clientY - drag.y0;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist > 4) drag.moved = true;
+      if (!drag.moved) return;
+      if (e.cancelable) e.preventDefault();
+
+      const { tx, tz, ry, sc, op } = drag.base;
+      const card = cardEls[drag.idx];
+
+      card.style.transform = [
+        `translateX(${tx + dx}px)`,
+        `translateY(${dy}px)`,
+        `translateZ(${tz}px)`,
+        `rotateY(${ry + dx * 0.02}deg)`,
+        `rotateZ(${dx * 0.012}deg)`,
+        `scale(${sc})`,
+      ].join(' ');
+
+      // Fade slightly as it moves out
+      card.style.opacity = op * (1 - Math.min(1, dist / DRAG_CLOSE) * 0.35);
+
+      // Red glow once past threshold
+      card.classList.toggle('will-close', dist >= DRAG_CLOSE);
+    }
+
+    function endDrag(e) {
+      if (!drag.on) return;
+      drag.on = false;
+      const p  = e.changedTouches ? e.changedTouches[0] : e;
+      const dx = p.clientX - drag.x0;
+      const dy = p.clientY - drag.y0;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      const card = cardEls[drag.idx];
+      card.classList.remove('will-close');
+
+      if (drag.moved && dist >= DRAG_CLOSE) {
+        poofClose(drag.idx, card, dx, dy);
+      } else {
+        // Snap back — restore transition and let updatePositions animate it home
+        card.style.zIndex  = '';
+        card.style.transition = '';
+        updatePositions();
+      }
+    }
+
+    function poofClose(idx, card, dx, dy) {
+      const { tx, tz, ry, sc } = drag.base;
+      // Fly further in the drag direction, shrink to nothing
+      card.style.transition = 'transform 0.22s cubic-bezier(0.4, 0, 1, 1), opacity 0.18s ease';
+      card.style.transform  = [
+        `translateX(${tx + dx * 1.5}px)`,
+        `translateY(${dy * 1.5}px)`,
+        `translateZ(${tz}px)`,
+        `rotateY(${ry}deg)`,
+        `rotateZ(${dx * 0.03}deg)`,
+        `scale(0.05)`,
+      ].join(' ');
+      card.style.opacity = '0';
+
+      setTimeout(() => {
+        const tab = filtered.splice(idx, 1)[0];
+        const ai  = ALL_TABS.findIndex(t => t.id === tab.id);
+        if (ai !== -1) ALL_TABS.splice(ai, 1);
+
+        if (idx < active) {
+          // Deleted a card to the LEFT — indices shifted down, follow the card
+          active = active - 1;
+        } else if (idx === active) {
+          // Deleted the active card itself — clamp to new length
+          active = Math.min(active, Math.max(0, filtered.length - 1));
+        }
+        // idx > active: right-side deletion, active card unaffected
+
+        buildCards();
+      }, 230);
+    }
+
+    document.addEventListener('mousemove', moveDrag);
+    document.addEventListener('mouseup',   endDrag);
+    document.addEventListener('touchmove', moveDrag, { passive: false });
+    document.addEventListener('touchend',  endDrag);
+
+    // ── Boot ─────────────────────────────────────────────────────────────────
+    buildCards();
+  </script>
+</body>
+</html>
