@@ -328,6 +328,7 @@ function closeActiveTab() {
       removeTabFromModels(item, currentIdx);
       chrome.tabs.remove(item.id);
       showUndoToast(item.title);
+      if (viewMode === 'group' && filtered.length === 0) { exitGroup(); return; }
       active = Math.min(active, Math.max(0, filtered.length - 1));
       buildCards();
     }, 260);
@@ -419,8 +420,7 @@ document.addEventListener('keydown', e => {
       break;
     case 'Escape':
       e.preventDefault();
-      if (viewMode === 'group') exitGroup();
-      else closeActiveTab();
+      closeActiveTab();
       break;
     case '/': e.preventDefault(); searchEl.focus(); break;
   }
@@ -550,6 +550,8 @@ function poofClose(idx, card, dx, dy) {
     // Actually close the Chrome tab
     chrome.tabs.remove(tab.id);
     showUndoToast(tab.title);
+
+    if (viewMode === 'group' && filtered.length === 0) { exitGroup(); return; }
 
     if (currentIdx < active)       active = active - 1;
     else if (currentIdx === active) active = Math.min(active, Math.max(0, filtered.length - 1));
