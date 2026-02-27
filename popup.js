@@ -1,7 +1,3 @@
-// ── Context ───────────────────────────────────────────────────────────────────
-// True when running as a full-page new tab; false when running as a popup.
-const IS_NEWTAB = window.location.pathname.endsWith('/newtab.html');
-
 // ── State ─────────────────────────────────────────────────────────────────────
 let allTabs     = [];      // flat list of all tab objects (with groupId)
 let mainItems   = [];      // main carousel items: ungrouped tabs + group cards
@@ -278,8 +274,6 @@ function openTab() {
   setTimeout(() => {
     chrome.tabs.update(tab.id, { active: true });
     chrome.windows.update(tab.windowId, { focused: true });
-    // In newtab mode, leave TabFlow open — user may want to switch to more tabs
-    if (!IS_NEWTAB) window.close();
   }, 160);
 }
 
@@ -423,8 +417,7 @@ document.addEventListener('keydown', e => {
       break;
     case 'Escape':
       e.preventDefault();
-      if (IS_NEWTAB) closeActiveTab();
-      else window.close();
+      closeActiveTab();
       break;
     case '/': e.preventDefault(); searchEl.focus(); break;
   }
@@ -566,8 +559,8 @@ async function init() {
     new Promise(r => chrome.tabGroups.query({ windowId: chrome.windows.WINDOW_ID_CURRENT }, r)),
   ]);
 
-  // In newtab mode, filter the TabFlow page itself out of the list
-  const selfUrl = IS_NEWTAB ? chrome.runtime.getURL('newtab.html') : null;
+  // Filter the TabFlow page itself out of the tab list
+  const selfUrl = chrome.runtime.getURL('newtab.html');
 
   // Build flat tab list with groupId
   allTabs = allChromeTabs
