@@ -425,15 +425,20 @@ document.addEventListener('keydown', e => {
 });
 
 // ── Search / filter ───────────────────────────────────────────────────────────
-function applyFilter(q) {
-  const query  = q.toLowerCase().trim();
-  const source = viewMode === 'group' ? activeGroup.tabs : mainItems;
-  filtered = query
+// Returns a filtered copy of source using a pre-lowercased, trimmed query.
+function applyFilterToSource(source, query) {
+  return query
     ? source.filter(t =>
         t.type === 'group'
           ? t.title.toLowerCase().includes(query)
           : t.title.toLowerCase().includes(query) || t.domain.toLowerCase().includes(query))
     : [...source];
+}
+
+function applyFilter(q) {
+  const query  = q.toLowerCase().trim();
+  const source = viewMode === 'group' ? activeGroup.tabs : mainItems;
+  filtered = applyFilterToSource(source, query);
   active = 0;
   buildCards();
 }
@@ -619,12 +624,7 @@ async function reloadTabs() {
 
   // Re-apply the active search filter without resetting the carousel position
   const source = viewMode === 'group' ? activeGroup.tabs : mainItems;
-  filtered = currentQuery
-    ? source.filter(t =>
-        t.type === 'group'
-          ? t.title.toLowerCase().includes(currentQuery)
-          : t.title.toLowerCase().includes(currentQuery) || t.domain.toLowerCase().includes(currentQuery))
-    : [...source];
+  filtered = applyFilterToSource(source, currentQuery);
 
   // Restore the previously focused item; clamp to end if it no longer exists
   const newIdx = filtered.findIndex(item => item.id === focusedId);
