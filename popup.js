@@ -283,6 +283,33 @@ function openTab() {
   }, 160);
 }
 
+// ── Centralized model cleanup when a tab is closed ────────────────────────────
+// Keeps filtered, allTabs, mainItems and group .tabs arrays in sync.
+function removeTabFromModels(tab, filteredIdx) {
+  filtered.splice(filteredIdx, 1);
+
+  const ai = allTabs.findIndex(t => t.id === tab.id);
+  if (ai !== -1) allTabs.splice(ai, 1);
+
+  if (tab.groupId !== -1) {
+    // Grouped tab: update the group card's tabs array
+    const groupCard = mainItems.find(item => item.type === 'group' && item.id === tab.groupId);
+    if (groupCard) {
+      const ti = groupCard.tabs.findIndex(t => t.id === tab.id);
+      if (ti !== -1) groupCard.tabs.splice(ti, 1);
+      // If the group is now empty, drop its card from mainItems too
+      if (groupCard.tabs.length === 0) {
+        const mi = mainItems.indexOf(groupCard);
+        if (mi !== -1) mainItems.splice(mi, 1);
+      }
+    }
+  } else {
+    // Ungrouped tab: remove directly from mainItems
+    const mi = mainItems.findIndex(item => item.type === 'tab' && item.id === tab.id);
+    if (mi !== -1) mainItems.splice(mi, 1);
+  }
+}
+
 // ── Close active tab (Escape key in newtab mode) ──────────────────────────────
 function closeActiveTab() {
   if (!filtered.length) return;
@@ -301,11 +328,9 @@ function closeActiveTab() {
     card.style.opacity    = '0';
 
     setTimeout(() => {
-      const tab = filtered.splice(idx, 1)[0];
-      const ai  = allTabs.findIndex(t => t.id === tab.id);
-      if (ai !== -1) allTabs.splice(ai, 1);
-      chrome.tabs.remove(tab.id);
-      showUndoToast(tab.title);
+      removeTabFromModels(item, idx);
+      chrome.tabs.remove(item.id);
+      showUndoToast(item.title);
       active = Math.min(active, Math.max(0, filtered.length - 1));
       buildCards();
     }, 260);
@@ -509,9 +534,8 @@ function poofClose(idx, card, dx, dy) {
   card.style.opacity = '0';
 
   setTimeout(() => {
-    const tab = filtered.splice(idx, 1)[0];
-    const ai  = allTabs.findIndex(t => t.id === tab.id);
-    if (ai !== -1) allTabs.splice(ai, 1);
+    const tab = filtered[idx];
+    removeTabFromModels(tab, idx);
 
     // Actually close the Chrome tab
     chrome.tabs.remove(tab.id);
