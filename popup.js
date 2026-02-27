@@ -445,7 +445,12 @@ function applyFilter(q) {
   buildCards();
 }
 
-searchEl.addEventListener('input', e => applyFilter(e.target.value));
+let searchTimer = null;
+searchEl.addEventListener('input', e => {
+  const value = e.target.value;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => applyFilter(value), 150);
+});
 
 // ── Trackpad / mouse-wheel ────────────────────────────────────────────────────
 let wheelLock = false;
