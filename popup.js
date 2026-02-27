@@ -1,11 +1,12 @@
 // ── State ─────────────────────────────────────────────────────────────────────
-let allTabs     = [];      // flat list of all tab objects (with groupId)
-let mainItems   = [];      // main carousel items: ungrouped tabs + group cards
-let filtered    = [];      // current carousel subset (main or group)
-let active      = 0;       // index into filtered[]
-let cardEls     = [];      // persistent DOM refs — never destroyed on navigate
-let viewMode    = 'main';  // 'main' | 'group'
-let activeGroup = null;    // group item currently being browsed
+let allTabs         = [];      // flat list of all tab objects (with groupId)
+let mainItems       = [];      // main carousel items: ungrouped tabs + group cards
+let filtered        = [];      // current carousel subset (main or group)
+let active          = 0;       // index into filtered[]
+let cardEls         = [];      // persistent DOM refs — never destroyed on navigate
+let viewMode        = 'main';  // 'main' | 'group'
+let activeGroup     = null;    // group item currently being browsed
+let currentWindowId = null;    // id of the window TabFlow is running in
 
 // ── Tab group color map ────────────────────────────────────────────────────────
 const GROUP_COLORS = {
@@ -424,15 +425,20 @@ document.addEventListener('keydown', e => {
 });
 
 // ── Search / filter ───────────────────────────────────────────────────────────
-function applyFilter(q) {
-  const query  = q.toLowerCase().trim();
-  const source = viewMode === 'group' ? activeGroup.tabs : mainItems;
-  filtered = query
+// Returns a filtered copy of source using a pre-lowercased, trimmed query.
+function applyFilterToSource(source, query) {
+  return query
     ? source.filter(t =>
         t.type === 'group'
           ? t.title.toLowerCase().includes(query)
           : t.title.toLowerCase().includes(query) || t.domain.toLowerCase().includes(query))
     : [...source];
+}
+
+function applyFilter(q) {
+  const query  = q.toLowerCase().trim();
+  const source = viewMode === 'group' ? activeGroup.tabs : mainItems;
+  filtered = applyFilterToSource(source, query);
   active = 0;
   buildCards();
 }
@@ -559,57 +565,12 @@ async function init() {
     new Promise(r => chrome.tabGroups.query({ windowId: chrome.windows.WINDOW_ID_CURRENT }, r)),
   ]);
 
-  // Filter the TabFlow page itself out of the tab list
-  const selfUrl = chrome.runtime.getURL('newtab.html');
+  // Capture the window this TabFlow instance belongs to
+  currentWindowId = activeTabs[0]?.windowId
+    ?? (await new Promise(r => chrome.windows.getCurrent({}, w => r(w.id))));
 
-  // Build flat tab list with groupId
-  allTabs = allChromeTabs
-    .filter(tab => tab.url !== selfUrl)
-    .map(tab => ({
-      type:       'tab',
-      id:         tab.id,
-      windowId:   tab.windowId,
-      title:      tab.title || 'New Tab',
-      domain:     getDomain(tab.url),
-      url:        tab.url || '',
-      favIconUrl: tab.favIconUrl || '',
-      groupId:    tab.groupId,
-    }));
-
-  // Build group objects keyed by id
-  const groupMap = {};
-  allGroups.forEach(g => {
-    groupMap[g.id] = {
-      type:  'group',
-      id:    g.id,
-      title: g.title || 'Tab Group',
-      color: g.color,
-      tabs:  [],
-    };
-  });
-
-  // Assign tabs to their groups
-  allTabs.forEach(tab => {
-    if (tab.groupId !== -1 && groupMap[tab.groupId]) {
-      groupMap[tab.groupId].tabs.push(tab);
-    }
-  });
-
-  // Build mainItems preserving Chrome tab order:
-  // ungrouped tabs appear individually; grouped tabs appear as one group card (first occurrence)
-  const seenGroups = new Set();
-  mainItems = [];
-  allChromeTabs
-    .filter(tab => tab.url !== selfUrl)
-    .forEach(tab => {
-      if (tab.groupId === -1) {
-        const tabObj = allTabs.find(t => t.id === tab.id);
-        if (tabObj) mainItems.push(tabObj);
-      } else if (!seenGroups.has(tab.groupId) && groupMap[tab.groupId]) {
-        seenGroups.add(tab.groupId);
-        mainItems.push(groupMap[tab.groupId]);
-      }
-    });
+  // Build allTabs and mainItems via the model layer
+  ({ allTabs, mainItems } = buildAllModels(allChromeTabs, allGroups));
 
   // Reset to main view
   viewMode    = 'main';
@@ -617,7 +578,7 @@ async function init() {
   if (hintExitGroupEl) hintExitGroupEl.style.display = 'none';
   filtered = [...mainItems];
 
-  // Centre on whichever tab (or its group card) is currently active
+  // Centre on whichever tab (or its group card) is currently active in Chrome
   const currentTab = activeTabs[0];
   if (currentTab) {
     const idx = mainItems.findIndex(item =>
@@ -632,5 +593,88 @@ async function init() {
 
   buildCards();
 }
+
+// ── Live sync: re-fetch and rebuild when tabs change externally ────────────────
+async function reloadTabs() {
+  const seq          = reloadSeq;
+  const focusedId    = filtered[active]?.id;
+  const currentQuery = searchEl.value.toLowerCase().trim();
+
+  const [freshChromeTabs, freshGroups] = await Promise.all([
+    new Promise(r => chrome.tabs.query({ currentWindow: true }, r)),
+    new Promise(r => chrome.tabGroups.query({ windowId: chrome.windows.WINDOW_ID_CURRENT }, r)),
+  ]);
+
+  // A newer reload was scheduled while we were awaiting — discard this result
+  if (seq !== reloadSeq) return;
+
+  ({ allTabs, mainItems } = buildAllModels(freshChromeTabs, freshGroups));
+
+  // If inside a group, refresh the group reference or fall back to main view
+  if (viewMode === 'group') {
+    const refreshedGroup = mainItems.find(item => item.type === 'group' && item.id === activeGroup.id);
+    if (refreshedGroup) {
+      activeGroup = refreshedGroup;
+    } else {
+      viewMode    = 'main';
+      activeGroup = null;
+      if (hintExitGroupEl) hintExitGroupEl.style.display = 'none';
+    }
+  }
+
+  // Re-apply the active search filter without resetting the carousel position
+  const source = viewMode === 'group' ? activeGroup.tabs : mainItems;
+  filtered = applyFilterToSource(source, currentQuery);
+
+  // Restore the previously focused item; clamp to end if it no longer exists
+  const newIdx = filtered.findIndex(item => item.id === focusedId);
+  active = newIdx >= 0 ? newIdx : Math.min(active, Math.max(0, filtered.length - 1));
+
+  buildCards();
+}
+
+// ── Tab/group event listeners — debounced, scoped to this window ───────────────
+let reloadTimer = null;
+let reloadSeq   = 0;
+function scheduleReload() {
+  clearTimeout(reloadTimer);
+  reloadSeq++;
+  reloadTimer = setTimeout(reloadTabs, 400);
+}
+
+// Tab events — only react to changes in this window
+chrome.tabs.onCreated.addListener(tab => {
+  if (tab.windowId === currentWindowId) scheduleReload();
+});
+chrome.tabs.onRemoved.addListener((_, removeInfo) => {
+  if (removeInfo.windowId === currentWindowId) scheduleReload();
+});
+chrome.tabs.onUpdated.addListener((_, changeInfo, tab) => {
+  if (tab.windowId === currentWindowId &&
+      ('title' in changeInfo || 'favIconUrl' in changeInfo ||
+       'groupId' in changeInfo || 'url' in changeInfo)) {
+    scheduleReload();
+  }
+});
+chrome.tabs.onMoved.addListener((_, moveInfo) => {
+  if (moveInfo.windowId === currentWindowId) scheduleReload();
+});
+chrome.tabs.onAttached.addListener((_, attachInfo) => {
+  if (attachInfo.newWindowId === currentWindowId) scheduleReload();
+});
+chrome.tabs.onDetached.addListener((_, detachInfo) => {
+  if (detachInfo.oldWindowId === currentWindowId) scheduleReload();
+});
+
+// Group events — TabGroup objects include windowId, so we can scope these too
+chrome.tabGroups.onCreated.addListener(group => {
+  if (group.windowId === currentWindowId) scheduleReload();
+});
+chrome.tabGroups.onUpdated.addListener(group => {
+  if (group.windowId === currentWindowId) scheduleReload();
+});
+chrome.tabGroups.onRemoved.addListener(group => {
+  if (group.windowId === currentWindowId) scheduleReload();
+});
 
 init();
