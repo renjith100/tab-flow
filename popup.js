@@ -328,7 +328,9 @@ function closeActiveTab() {
     card.style.opacity    = '0';
 
     setTimeout(() => {
-      removeTabFromModels(item, idx);
+      const currentIdx = filtered.findIndex(t => t.id === item.id);
+      if (currentIdx === -1) return; // already removed by a concurrent close
+      removeTabFromModels(item, currentIdx);
       chrome.tabs.remove(item.id);
       showUndoToast(item.title);
       active = Math.min(active, Math.max(0, filtered.length - 1));
@@ -521,6 +523,7 @@ function endDrag(e) {
 }
 
 function poofClose(idx, card, dx, dy) {
+  const tab = filtered[idx]; // capture by identity before any async delay
   const { tx, tz, ry } = drag.base;
   card.style.transition = 'transform 0.22s cubic-bezier(0.4, 0, 1, 1), opacity 0.18s ease';
   card.style.transform  = [
@@ -534,15 +537,16 @@ function poofClose(idx, card, dx, dy) {
   card.style.opacity = '0';
 
   setTimeout(() => {
-    const tab = filtered[idx];
-    removeTabFromModels(tab, idx);
+    const currentIdx = filtered.findIndex(t => t.id === tab.id);
+    if (currentIdx === -1) return; // already removed by a concurrent close
+    removeTabFromModels(tab, currentIdx);
 
     // Actually close the Chrome tab
     chrome.tabs.remove(tab.id);
     showUndoToast(tab.title);
 
-    if (idx < active)       active = active - 1;
-    else if (idx === active) active = Math.min(active, Math.max(0, filtered.length - 1));
+    if (currentIdx < active)       active = active - 1;
+    else if (currentIdx === active) active = Math.min(active, Math.max(0, filtered.length - 1));
     // idx > active: right-side deletion, centre card unaffected
 
     buildCards();
