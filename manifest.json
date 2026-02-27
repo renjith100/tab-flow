@@ -3,6 +3,7 @@
   "name": "TabFlow",
   "description": "Cover Flow tab switcher — find any tab at a glance",
   "version": "1.0.0",
+  "homepage_url": "https://github.com/renjith100/tab-flow",
 
   "action": {
     "default_title": "TabFlow",
