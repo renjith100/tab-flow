@@ -660,10 +660,15 @@ chrome.tabs.onDetached.addListener((_, detachInfo) => {
   if (detachInfo.oldWindowId === currentWindowId) scheduleReload();
 });
 
-// Group events — Chrome doesn't include windowId in tabGroups callbacks,
-// so reloadTabs() naturally scopes to this window via currentWindow: true
-chrome.tabGroups.onCreated.addListener(scheduleReload);
-chrome.tabGroups.onUpdated.addListener(scheduleReload);
-chrome.tabGroups.onRemoved.addListener(scheduleReload);
+// Group events — TabGroup objects include windowId, so we can scope these too
+chrome.tabGroups.onCreated.addListener(group => {
+  if (group.windowId === currentWindowId) scheduleReload();
+});
+chrome.tabGroups.onUpdated.addListener(group => {
+  if (group.windowId === currentWindowId) scheduleReload();
+});
+chrome.tabGroups.onRemoved.addListener(group => {
+  if (group.windowId === currentWindowId) scheduleReload();
+});
 
 init();
