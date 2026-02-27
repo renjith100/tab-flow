@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TabFlow — Generate Icons</title>
+  <style>
+    body { font-family: sans-serif; background: #111; color: #eee; padding: 32px; }
+    canvas { border: 1px solid #333; margin: 8px; border-radius: 8px; }
+    button { margin-top: 24px; padding: 10px 24px; background: #8b5cf6; color: #fff;
+             border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }
+    button:hover { background: #7c3aed; }
+    p { color: #888; margin-top: 12px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h2>TabFlow Icon Generator</h2>
+  <p>Click the button — icons are downloaded automatically and saved to this folder.</p>
+
+  <div id="previews"></div>
+  <button onclick="generateAll()">Download All Icons</button>
+
+  <script>
+    const SIZES = [16, 48, 128];
+
+    function roundRectPath(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function drawIcon(ctx, size) {
+      const r = Math.max(2, Math.round(size * 0.18));
+
+      // Dark background with subtle centre glow
+      const bgGrad = ctx.createRadialGradient(size * 0.5, size * 0.4, 0, size * 0.5, size * 0.5, size * 0.75);
+      bgGrad.addColorStop(0, '#12102a');
+      bgGrad.addColorStop(1, '#07070d');
+      roundRectPath(ctx, 0, 0, size, size, r);
+      ctx.fillStyle = bgGrad;
+      ctx.fill();
+
+      // Three cards — miniature Cover Flow
+      const cw  = size * 0.21;
+      const cch = size * 0.52;   // centre card height
+      const sch = size * 0.38;   // side card height
+      const cy  = size * 0.5;
+      const cr  = Math.max(1, size * 0.05);
+
+      // Left card
+      ctx.save();
+      ctx.translate(size * 0.24, cy + size * 0.02);
+      ctx.rotate(-0.38);
+      roundRectPath(ctx, -cw / 2, -sch / 2, cw, sch, cr);
+      ctx.fillStyle = 'rgba(139, 92, 246, 0.32)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(139, 92, 246, 0.25)';
+      ctx.lineWidth = Math.max(0.5, size * 0.01);
+      ctx.stroke();
+      ctx.restore();
+
+      // Right card
+      ctx.save();
+      ctx.translate(size * 0.76, cy + size * 0.02);
+      ctx.rotate(0.38);
+      roundRectPath(ctx, -cw / 2, -sch / 2, cw, sch, cr);
+      ctx.fillStyle = 'rgba(139, 92, 246, 0.32)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(139, 92, 246, 0.25)';
+      ctx.lineWidth = Math.max(0.5, size * 0.01);
+      ctx.stroke();
+      ctx.restore();
+
+      // Centre card — violet, glowing
+      ctx.save();
+      ctx.shadowColor = 'rgba(139, 92, 246, 0.7)';
+      ctx.shadowBlur  = size * 0.18;
+      roundRectPath(ctx, size * 0.5 - cw / 2, cy - cch / 2, cw, cch, cr);
+      ctx.fillStyle = '#8b5cf6';
+      ctx.fill();
+      ctx.restore();
+
+      // Subtle shelf line
+      if (size >= 48) {
+        ctx.beginPath();
+        ctx.moveTo(size * 0.08, cy + cch / 2 + size * 0.04);
+        ctx.lineTo(size * 0.92, cy + cch / 2 + size * 0.04);
+        ctx.strokeStyle = 'rgba(139, 92, 246, 0.25)';
+        ctx.lineWidth = Math.max(0.5, size * 0.008);
+        ctx.stroke();
+      }
+    }
+
+    function generateAll() {
+      SIZES.forEach(size => {
+        const canvas = document.createElement('canvas');
+        canvas.width  = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        drawIcon(ctx, size);
+        canvas.toBlob(blob => {
+          const a = document.createElement('a');
+          a.href     = URL.createObjectURL(blob);
+          a.download = `icon${size}.png`;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        }, 'image/png');
+      });
+    }
+
+    // Show previews on load
+    window.onload = () => {
+      const wrap = document.getElementById('previews');
+      SIZES.forEach(size => {
+        const displaySize = Math.max(size, 64); // show at least 64px for visibility
+        const canvas = document.createElement('canvas');
+        canvas.width  = displaySize;
+        canvas.height = displaySize;
+        canvas.title  = `${size}×${size}`;
+        const ctx = canvas.getContext('2d');
+        // Scale up small sizes for preview
+        ctx.scale(displaySize / size, displaySize / size);
+        drawIcon(ctx, size);
+        wrap.appendChild(canvas);
+      });
+    };
+  </script>
+</body>
+</html>
