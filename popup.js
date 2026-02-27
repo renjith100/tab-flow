@@ -412,13 +412,15 @@ document.addEventListener('keydown', e => {
     case 'ArrowLeft':  e.preventDefault(); go(-1); break;
     case 'ArrowRight': e.preventDefault(); go(1);  break;
     case 'Enter':
+    case ' ':
       e.preventDefault();
       if (filtered[active]?.type === 'group') enterGroup(filtered[active]);
       else openTab();
       break;
     case 'Escape':
       e.preventDefault();
-      closeActiveTab();
+      if (viewMode === 'group') exitGroup();
+      else closeActiveTab();
       break;
     case '/': e.preventDefault(); searchEl.focus(); break;
   }
