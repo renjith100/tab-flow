@@ -20,13 +20,17 @@ Extensions API:
 
 All data is used **exclusively within your browser** to render the carousel UI.
 
-- No data is transmitted to any server.
+- No user-identifiable browsing data is transmitted to any server, with one
+  exception: favicon fetches described below.
 - No data is stored persistently (everything is in-memory and discarded when the
   TabFlow tab is closed).
 - No analytics, tracking, or advertising.
-- The only outbound network requests are to `https://www.google.com/s2/favicons`
-  to fetch site icons — your tab domain names are sent as URL parameters in these
-  requests, which is the same as how Chrome itself fetches favicons.
+- **Favicon requests:** when a tab does not supply its own icon, TabFlow fetches
+  one from `https://www.google.com/s2/favicons?domain=<domain>&sz=128`. This
+  request includes the site's domain name (e.g. `github.com`) as a URL
+  parameter — no full URLs, page titles, or personal information are included.
+  Your browser caches these responses, so the same domain is not re-requested on
+  every open.
 
 ## Third-party services
 
