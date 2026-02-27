@@ -591,6 +591,7 @@ async function init() {
 
 // ── Live sync: re-fetch and rebuild when tabs change externally ────────────────
 async function reloadTabs() {
+  const seq          = reloadSeq;
   const focusedId    = filtered[active]?.id;
   const currentQuery = searchEl.value.toLowerCase().trim();
 
@@ -598,6 +599,9 @@ async function reloadTabs() {
     new Promise(r => chrome.tabs.query({ currentWindow: true }, r)),
     new Promise(r => chrome.tabGroups.query({ windowId: chrome.windows.WINDOW_ID_CURRENT }, r)),
   ]);
+
+  // A newer reload was scheduled while we were awaiting — discard this result
+  if (seq !== reloadSeq) return;
 
   ({ allTabs, mainItems } = buildAllModels(freshChromeTabs, freshGroups));
 
@@ -631,8 +635,10 @@ async function reloadTabs() {
 
 // ── Tab/group event listeners — debounced, scoped to this window ───────────────
 let reloadTimer = null;
+let reloadSeq   = 0;
 function scheduleReload() {
   clearTimeout(reloadTimer);
+  reloadSeq++;
   reloadTimer = setTimeout(reloadTabs, 400);
 }
 
