@@ -214,14 +214,30 @@ function updatePositions({ instant = false } = {}) {
   totEl.textContent = filtered.length;
 
   const item = filtered[active];
+  detailEl.textContent = '';
   if (item.type === 'group') {
     const color = GROUP_COLORS[item.color] || '#9ca3af';
-    detailEl.innerHTML = `<span class="hl" style="color:${color}">${item.title}</span> &nbsp;·&nbsp; ${item.tabs.length} tab${item.tabs.length !== 1 ? 's' : ''}`;
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'hl';
+    titleSpan.style.color = color;
+    titleSpan.textContent = item.title;
+    const count = item.tabs.length;
+    detailEl.appendChild(titleSpan);
+    detailEl.appendChild(document.createTextNode(` · ${count} tab${count !== 1 ? 's' : ''}`));
   } else {
-    const breadcrumb = viewMode === 'group'
-      ? `<span class="group-breadcrumb" style="color:${GROUP_COLORS[activeGroup.color] || '#9ca3af'}">${activeGroup.title}</span><span class="breadcrumb-sep"> › </span>`
-      : '';
-    detailEl.innerHTML = `${breadcrumb}<span class="hl">${item.title}</span> &nbsp;·&nbsp; ${item.domain}`;
+    if (viewMode === 'group') {
+      const breadcrumbSpan = document.createElement('span');
+      breadcrumbSpan.className = 'group-breadcrumb';
+      breadcrumbSpan.style.color = GROUP_COLORS[activeGroup.color] || '#9ca3af';
+      breadcrumbSpan.textContent = activeGroup.title;
+      detailEl.appendChild(breadcrumbSpan);
+      detailEl.appendChild(document.createTextNode(' › '));
+    }
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'hl';
+    titleSpan.textContent = item.title;
+    detailEl.appendChild(titleSpan);
+    detailEl.appendChild(document.createTextNode(` · ${item.domain}`));
   }
 
   cardEls.forEach((card, i) => {
@@ -320,7 +336,10 @@ function exitGroup() {
 let toastTimer = null;
 
 function showUndoToast(title) {
-  toastLabel.innerHTML = `Closed <strong>${title}</strong>`;
+  toastLabel.textContent = 'Closed ';
+  const strong = document.createElement('strong');
+  strong.textContent = title;
+  toastLabel.appendChild(strong);
   toastEl.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(hideUndoToast, 4000);
@@ -514,9 +533,9 @@ document.addEventListener('touchend',  endDrag);
 // ── Init: load real Chrome tabs + tab groups ──────────────────────────────────
 async function init() {
   const [allChromeTabs, activeTabs, allGroups] = await Promise.all([
-    new Promise(r => chrome.tabs.query({}, r)),
+    new Promise(r => chrome.tabs.query({ currentWindow: true }, r)),
     new Promise(r => chrome.tabs.query({ active: true, currentWindow: true }, r)),
-    new Promise(r => chrome.tabGroups.query({}, r)),
+    new Promise(r => chrome.tabGroups.query({ windowId: chrome.windows.WINDOW_ID_CURRENT }, r)),
   ]);
 
   // In newtab mode, filter the TabFlow page itself out of the list
