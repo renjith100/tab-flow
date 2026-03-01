@@ -207,20 +207,20 @@ body::before {
   background-size: 200% 100%;
   transform-origin: left;
   animation: 
-    intensityPulse var(--pulse-dur, 1.2s) cubic-bezier(0.4, 0, 0.2, 1) infinite,
-    intensityShift var(--shift-dur, 3s) linear infinite;
+    intensity-pulse var(--pulse-dur, 1.2s) cubic-bezier(0.4, 0, 0.2, 1) infinite,
+    intensity-shift var(--shift-dur, 3s) linear infinite;
   animation-delay: var(--anim-delay, 0s);
   box-shadow: 0 0 12px var(--violet);
 }
 
-@keyframes intensityPulse {
+@keyframes intensity-pulse {
   0%, 100% { transform: scaleX(0.3); opacity: 0.4; }
   25% { transform: scaleX(var(--pulse-scale, 0.8)); opacity: 0.8; }
   50% { transform: scaleX(calc(var(--pulse-scale, 0.8) * 0.6)); opacity: 0.6; }
   75% { transform: scaleX(var(--pulse-scale, 1)); opacity: 1; }
 }
 
-@keyframes intensityShift {
+@keyframes intensity-shift {
   from { background-position: 0% 0%; }
   to { background-position: 200% 0%; }
 }
