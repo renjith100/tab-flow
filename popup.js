@@ -7,6 +7,8 @@ let cardEls         = [];      // persistent DOM refs — never destroyed on nav
 let viewMode        = 'main';  // 'main' | 'group'
 let activeGroup     = null;    // group item currently being browsed
 let currentWindowId = null;    // id of the window TabFlow is running in
+let isAnimatingRemoval = false; // block new deletions while one is in progress
+let tabsClosing     = new Set(); // ids of tabs currently animating for removal
 
 // ── Tab group color map ────────────────────────────────────────────────────────
 const GROUP_COLORS = {
@@ -255,6 +257,9 @@ function updatePositions({ instant = false } = {}) {
   }
 
   cardEls.forEach((card, i) => {
+    const item = filtered[i];
+    if (item?.id && tabsClosing.has(item.id)) return;
+
     const offset = i - active;
     const { tx, tz, ry, sc, op, zi } = getPos(offset);
     const far = Math.abs(offset) > 4;
@@ -326,13 +331,17 @@ function removeTabFromModels(tab, filteredIdx) {
 }
 
 // ── Close active tab (Escape key in newtab mode) ──────────────────────────────
+
 function closeActiveTab() {
-  if (!filtered.length) return;
+  if (!filtered.length || isAnimatingRemoval) return;
   const idx  = active;
   const item = filtered[idx];
   if (!item || item.type !== 'tab') return;
   const card = cardEls[idx];
   if (!card) return;
+
+  isAnimatingRemoval = true;
+  tabsClosing.add(item.id);
 
   // Flash red glow (same as drag-close), then arc out — freeze transition before removing
   // the class so the border snaps back without any flash triggering the old jump bug
@@ -389,6 +398,8 @@ function closeActiveTab() {
     showUndoToast(item.title);
     if (viewMode === 'group' && filtered.length === 0) { exitGroup(); return; }
     active = Math.min(active, Math.max(0, filtered.length - 1));
+    tabsClosing.delete(item.id);
+    isAnimatingRemoval = false;
     buildCards();
   }, 120 + 760); // glow delay + animation duration
 }
@@ -534,6 +545,13 @@ function initDrag(e, idx) {
   drag.y0    = p.clientY;
   drag.base  = getPos(idx - active);
   drag.moved = false;
+
+  const item = filtered[idx];
+  if (item?.id && tabsClosing.has(item.id)) {
+    drag.on = false;
+    return;
+  }
+
   const card = cardEls[idx];
   card.style.transition = 'border-color 0.15s ease, box-shadow 0.15s ease';
   card.style.zIndex = '200';
@@ -591,6 +609,10 @@ function endDrag(e) {
 
 function poofClose(idx, card, dx, dy) {
   const tab = filtered[idx];
+  if (!tab || tabsClosing.has(tab.id)) return;
+  tabsClosing.add(tab.id);
+  isAnimatingRemoval = true;
+
   const { tx, tz, ry, sc } = drag.base;
 
   card.style.transition = 'none';
@@ -639,6 +661,8 @@ function poofClose(idx, card, dx, dy) {
     else if (currentIdx === active) active = Math.min(active, Math.max(0, filtered.length - 1));
     // idx > active: right-side deletion, centre card unaffected
 
+    tabsClosing.delete(tab.id);
+    isAnimatingRemoval = false;
     buildCards();
   }, 230);
 }
