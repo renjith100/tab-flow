@@ -669,6 +669,9 @@ async function init() {
   if (hintExitGroupEl) hintExitGroupEl.style.display = 'none';
   filtered = [...mainItems];
 
+  // Calculate the middle for a symmetric starting view if possible
+  const midPoint = Math.floor(mainItems.length / 2);
+
   // Centre on whichever tab (or its group card) is currently active in Chrome
   const currentTab = activeTabs[0];
   if (currentTab) {
@@ -677,9 +680,10 @@ async function init() {
         ? item.id === currentTab.id
         : item.tabs.some(t => t.id === currentTab.id)
     );
-    active = idx >= 0 ? idx : 0;
+    // If we found the active tab, use it. Otherwise, default to the middle for symmetry.
+    active = idx >= 0 ? idx : midPoint;
   } else {
-    active = 0;
+    active = midPoint;
   }
 
   buildCards();
