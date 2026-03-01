@@ -352,7 +352,7 @@ function closeActiveTab() {
       const elapsed = now - startTime;
       const t = Math.min(1, elapsed / duration);
 
-      // Matches @keyframes cardPullOut in popup.css
+      // Matches @keyframes card-pull-out in popup.css
       // 0%: 0, 0, 0deg, 1.00; 30%: 8, -105, 1deg, 0.90; 52%: 36, -192, 3deg, 0.75; etc.
       let tx, dy, rz, s, op;
       if (t < 0.3) {

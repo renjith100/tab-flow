@@ -491,10 +491,11 @@ body::before {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── ESCAPE-CLOSE ARC ── */
-/* linear timing + dense early keyframes = ease-in via position spacing, not per-segment easing.
-   Quarter-ellipse shape: y dominates early, x takes over late — like a natural wrist-flick.   */
-@keyframes cardPullOut {
+/* ── DOCUMENTATION ONLY: ESCAPE-CLOSE ARC ── */
+/* This block is REFERENCE-ONLY. The actual animation is driven by JavaScript
+   (closeActiveTab() via requestAnimationFrame) to maintain physical reflection.
+   Do not apply this keyframe directly to elements via CSS. */
+@keyframes card-pull-out {
   0%   { transform: translateX(0)     translateY(0)      rotateZ(0deg)   scale(1);    opacity: 1; }
   30%  { transform: translateX(8px)   translateY(-105px) rotateZ(1deg)   scale(0.9);  opacity: 0.95; }
   52%  { transform: translateX(36px)  translateY(-192px) rotateZ(3deg)   scale(0.75); opacity: 0.8; }
