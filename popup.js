@@ -250,6 +250,12 @@ function updatePositions({ instant = false } = {}) {
     card.style.pointerEvents = far ? 'none' : 'auto';
     card.classList.toggle('is-active', i === active);
 
+    // Cover Flow reflection — offset corrected per scale so every card sits on the same shelf
+    const reflectOffset = (24 + (1 - sc) * 112).toFixed(1);
+    card.style.webkitBoxReflect = far
+      ? 'none'
+      : `below ${reflectOffset}px linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 68%)`;
+
     if (instant) {
       card.offsetHeight;       // force reflow so "no-transition" frame commits
       card.style.transition = '';
@@ -478,6 +484,7 @@ function initDrag(e, idx) {
   drag.moved = false;
   const card = cardEls[idx];
   card.style.transition = 'border-color 0.15s ease, box-shadow 0.15s ease';
+  card.style.webkitBoxReflect = 'none';
   card.style.zIndex = '200';
 }
 

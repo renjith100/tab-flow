@@ -69,7 +69,7 @@ body::before {
 .search-wrap {
   position: relative;
   z-index: 10;
-  margin-bottom: 28px;
+  margin-bottom: 10px;
   animation: fadeUp 0.5s 0.07s ease both;
 }
 
@@ -236,6 +236,8 @@ body::before {
     rgba(139, 92, 246, 0.12) 80%,
     transparent
   );
+  box-shadow: 0 0 18px rgba(139, 92, 246, 0.15),
+              0 1px 8px rgba(139, 92, 246, 0.08);
   z-index: 1;
   pointer-events: none;
 }
@@ -277,7 +279,7 @@ body::before {
 /* ── FOOTER ── */
 .footer {
   z-index: 10;
-  margin-top: 14px;
+  margin-bottom: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
