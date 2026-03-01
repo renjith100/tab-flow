@@ -69,7 +69,7 @@ body::before {
 .search-wrap {
   position: relative;
   z-index: 10;
-  margin-bottom: 28px;
+  margin-bottom: 10px;
   animation: fadeUp 0.5s 0.07s ease both;
 }
 
@@ -236,6 +236,8 @@ body::before {
     rgba(139, 92, 246, 0.12) 80%,
     transparent
   );
+  box-shadow: 0 0 18px rgba(139, 92, 246, 0.15),
+              0 1px 8px rgba(139, 92, 246, 0.08);
   z-index: 1;
   pointer-events: none;
 }
@@ -277,7 +279,7 @@ body::before {
 /* ── FOOTER ── */
 .footer {
   z-index: 10;
-  margin-top: 14px;
+  margin-bottom: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -487,4 +489,17 @@ body::before {
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── DOCUMENTATION ONLY: ESCAPE-CLOSE ARC ── */
+/* This block is REFERENCE-ONLY. The actual animation is driven by JavaScript
+   (closeActiveTab() via requestAnimationFrame) to maintain physical reflection.
+   Do not apply this keyframe directly to elements via CSS. */
+@keyframes card-pull-out {
+  0%   { transform: translateX(0)     translateY(0)      rotateZ(0deg)   scale(1);    opacity: 1; }
+  30%  { transform: translateX(8px)   translateY(-105px) rotateZ(1deg)   scale(0.9);  opacity: 0.95; }
+  52%  { transform: translateX(36px)  translateY(-192px) rotateZ(3deg)   scale(0.75); opacity: 0.8; }
+  70%  { transform: translateX(110px) translateY(-258px) rotateZ(5.5deg) scale(0.58); opacity: 0.55; }
+  85%  { transform: translateX(220px) translateY(-310px) rotateZ(7.5deg) scale(0.4);  opacity: 0.25; }
+  100% { transform: translateX(315px) translateY(-332px) rotateZ(9deg)   scale(0.27); opacity: 0; }
 }
