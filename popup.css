@@ -180,6 +180,51 @@ body::before {
   border-color: rgba(139, 92, 246, 0.2);
 }
 
+.card.is-audible {
+  border-color: var(--violet);
+  box-shadow:
+    0 0 20px var(--violet-soft),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.audio-intensity-wrapper {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
+  z-index: 5;
+}
+
+.audio-intensity-bar {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(to right, var(--violet), #a78bfa, #c084fc, var(--violet));
+  background-size: 200% 100%;
+  transform-origin: left;
+  animation: 
+    intensity-pulse var(--pulse-dur, 1.2s) cubic-bezier(0.4, 0, 0.2, 1) infinite,
+    intensity-shift var(--shift-dur, 3s) linear infinite;
+  animation-delay: var(--anim-delay, 0s);
+  box-shadow: 0 0 12px var(--violet);
+}
+
+@keyframes intensity-pulse {
+  0%, 100% { transform: scaleX(0.3); opacity: 0.4; }
+  25% { transform: scaleX(var(--pulse-scale, 0.8)); opacity: 0.8; }
+  50% { transform: scaleX(calc(var(--pulse-scale, 0.8) * 0.6)); opacity: 0.6; }
+  75% { transform: scaleX(var(--pulse-scale, 1)); opacity: 1; }
+}
+
+@keyframes intensity-shift {
+  from { background-position: 0% 0%; }
+  to { background-position: 200% 0%; }
+}
+
 .fav-img {
   width: 54px;
   height: 54px;
