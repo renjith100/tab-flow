@@ -393,14 +393,30 @@ function closeActiveTab() {
   setTimeout(() => {
     const currentIdx = filtered.findIndex(t => t.id === item.id);
     if (currentIdx === -1) return; // already removed by a concurrent close
+
+    const cardEl = cardEls[currentIdx];
+
     removeTabFromModels(item, currentIdx);
     chrome.tabs.remove(item.id);
     showUndoToast(item.title);
+
     if (viewMode === 'group' && filtered.length === 0) { exitGroup(); return; }
+
     active = Math.min(active, Math.max(0, filtered.length - 1));
+
+    if (cardEl) {
+      cardEl.remove();
+      cardEls.splice(currentIdx, 1);
+    }
+
     tabsClosing.delete(item.id);
     isAnimatingRemoval = false;
-    buildCards();
+
+    if (filtered.length === 0) {
+      buildCards();
+    } else {
+      updatePositions();
+    }
   }, 120 + 760); // glow delay + animation duration
 }
 
@@ -649,6 +665,9 @@ function poofClose(idx, card, dx, dy) {
   setTimeout(() => {
     const currentIdx = filtered.findIndex(t => t.id === tab.id);
     if (currentIdx === -1) return; // already removed by a concurrent close
+
+    const cardEl = cardEls[currentIdx];
+
     removeTabFromModels(tab, currentIdx);
 
     // Actually close the Chrome tab
@@ -661,9 +680,19 @@ function poofClose(idx, card, dx, dy) {
     else if (currentIdx === active) active = Math.min(active, Math.max(0, filtered.length - 1));
     // idx > active: right-side deletion, centre card unaffected
 
+    if (cardEl) {
+      cardEl.remove();
+      cardEls.splice(currentIdx, 1);
+    }
+
     tabsClosing.delete(tab.id);
     isAnimatingRemoval = false;
-    buildCards();
+
+    if (filtered.length === 0) {
+      buildCards();
+    } else {
+      updatePositions();
+    }
   }, 230);
 }
 
