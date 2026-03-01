@@ -74,6 +74,23 @@ function getPos(offset) {
   };
 }
 
+// ── updateReflect: applies physical mirror reflection ─────────────────────────
+// For real-world physics, the reflection should stay on the "floor".
+// In WebKit, -webkit-box-reflect offset is scaled by the element's transform.
+// If card height is H, gap to mirror is G, and card moves dy:
+// Total Screen Offset = (H + G - 2*dy).
+// Required CSS Offset = (Total Screen Offset / scale) - H.
+function updateReflect(card, sc, dy = 0, far = false) {
+  if (far) {
+    card.style.webkitBoxReflect = 'none';
+    return;
+  }
+  // H=224, G=24 => H+G=248. sc is the current animated scale.
+  const s = Math.max(0.01, sc); // prevent division by zero
+  const offset = ((248 - 2 * dy) / s - 224).toFixed(1);
+  card.style.webkitBoxReflect = `below ${offset}px linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 68%)`;
+}
+
 // ── buildCards: create DOM once (on init or after filtering) ──────────────────
 function buildCards() {
   cardsEl.innerHTML = '';
@@ -251,10 +268,7 @@ function updatePositions({ instant = false } = {}) {
     card.classList.toggle('is-active', i === active);
 
     // Cover Flow reflection — offset corrected per scale so every card sits on the same shelf
-    const reflectOffset = (24 + (1 - sc) * 112).toFixed(1);
-    card.style.webkitBoxReflect = far
-      ? 'none'
-      : `below ${reflectOffset}px linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 68%)`;
+    updateReflect(card, sc, 0, far);
 
     if (instant) {
       card.offsetHeight;       // force reflow so "no-transition" frame commits
@@ -320,25 +334,63 @@ function closeActiveTab() {
   const card = cardEls[idx];
   if (!card) return;
 
-  // Red glow for 100ms so the user sees what's about to be deleted, then poof up
+  // Flash red glow (same as drag-close), then arc out — freeze transition before removing
+  // the class so the border snaps back without any flash triggering the old jump bug
   card.classList.add('will-close');
-  setTimeout(() => {
-    card.classList.remove('will-close');
-    card.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 1, 1), opacity 0.2s ease';
-    card.style.transform  = 'translateX(0) translateY(-160px) rotateZ(-4deg) scale(0.05)';
-    card.style.opacity    = '0';
 
-    setTimeout(() => {
-      const currentIdx = filtered.findIndex(t => t.id === item.id);
-      if (currentIdx === -1) return; // already removed by a concurrent close
-      removeTabFromModels(item, currentIdx);
-      chrome.tabs.remove(item.id);
-      showUndoToast(item.title);
-      if (viewMode === 'group' && filtered.length === 0) { exitGroup(); return; }
-      active = Math.min(active, Math.max(0, filtered.length - 1));
-      buildCards();
-    }, 260);
-  }, 100);
+  setTimeout(() => {
+    card.style.transition = 'none';
+    card.style.zIndex = '200';
+
+    const startTime = performance.now();
+    const duration  = 750;
+
+    // Correcting reflection during animation requires a JS loop to keep it "physical"
+    const { sc } = getPos(idx - active);
+
+    const animate = (now) => {
+      const elapsed = now - startTime;
+      const t = Math.min(1, elapsed / duration);
+
+      // Matches @keyframes cardPullOut in popup.css
+      // 0%: 0, 0, 0deg, 1.00; 30%: 8, -105, 1deg, 0.90; 52%: 36, -192, 3deg, 0.75; etc.
+      let tx, dy, rz, s, op;
+      if (t < 0.3) {
+        const r = t / 0.3;
+        tx = 8 * r; dy = -105 * r; rz = 1 * r; s = 1 - 0.1 * r; op = 1 - 0.05 * r;
+      } else if (t < 0.52) {
+        const r = (t - 0.3) / 0.22;
+        tx = 8 + (36-8)*r; dy = -105 + (-192 - -105)*r; rz = 1 + (3-1)*r; s = 0.9 - 0.15*r; op = 0.95 - 0.15*r;
+      } else if (t < 0.7) {
+        const r = (t - 0.52) / 0.18;
+        tx = 36 + (110-36)*r; dy = -192 + (-258 - -192)*r; rz = 3 + (5.5-3)*r; s = 0.75 - 0.17*r; op = 0.8 - 0.25*r;
+      } else if (t < 0.85) {
+        const r = (t - 0.7) / 0.15;
+        tx = 110 + (220-110)*r; dy = -258 + (-310 - -258)*r; rz = 5.5 + (7.5-5.5)*r; s = 0.58 - 0.18*r; op = 0.55 - 0.3*r;
+      } else {
+        const r = (t - 0.85) / 0.15;
+        tx = 220 + (315-220)*r; dy = -310 + (-332 - -310)*r; rz = 7.5 + (9-7.5)*r; s = 0.4 - 0.13*r; op = 0.25 - 0.25*r;
+      }
+
+      card.style.transform = `translateX(${tx}px) translateY(${dy}px) rotateZ(${rz}deg) scale(${s})`;
+      card.style.opacity = op;
+      updateReflect(card, s, dy);
+
+      if (t < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }, 120);
+
+  setTimeout(() => {
+    const currentIdx = filtered.findIndex(t => t.id === item.id);
+    if (currentIdx === -1) return; // already removed by a concurrent close
+    removeTabFromModels(item, currentIdx);
+    chrome.tabs.remove(item.id);
+    showUndoToast(item.title);
+    if (viewMode === 'group' && filtered.length === 0) { exitGroup(); return; }
+    active = Math.min(active, Math.max(0, filtered.length - 1));
+    buildCards();
+  }, 120 + 760); // glow delay + animation duration
 }
 
 // ── Tab group navigation ───────────────────────────────────────────────────────
@@ -484,7 +536,6 @@ function initDrag(e, idx) {
   drag.moved = false;
   const card = cardEls[idx];
   card.style.transition = 'border-color 0.15s ease, box-shadow 0.15s ease';
-  card.style.webkitBoxReflect = 'none';
   card.style.zIndex = '200';
 }
 
@@ -513,6 +564,9 @@ function moveDrag(e) {
 
   card.style.opacity = op * (1 - Math.min(1, dist / DRAG_CLOSE) * 0.35);
   card.classList.toggle('will-close', dist >= DRAG_CLOSE);
+
+  // Update physical reflection during drag
+  updateReflect(card, sc, dy);
 }
 
 function endDrag(e) {
@@ -536,18 +590,39 @@ function endDrag(e) {
 }
 
 function poofClose(idx, card, dx, dy) {
-  const tab = filtered[idx]; // capture by identity before any async delay
-  const { tx, tz, ry } = drag.base;
-  card.style.transition = 'transform 0.22s cubic-bezier(0.4, 0, 1, 1), opacity 0.18s ease';
-  card.style.transform  = [
-    `translateX(${tx + dx * 1.5}px)`,
-    `translateY(${dy * 1.5}px)`,
-    `translateZ(${tz}px)`,
-    `rotateY(${ry}deg)`,
-    `rotateZ(${dx * 0.03}deg)`,
-    `scale(0.05)`,
-  ].join(' ');
-  card.style.opacity = '0';
+  const tab = filtered[idx];
+  const { tx, tz, ry, sc } = drag.base;
+
+  card.style.transition = 'none';
+
+  const startTime = performance.now();
+  const duration  = 220;
+
+  const animate = (now) => {
+    const elapsed = now - startTime;
+    const t = Math.min(1, elapsed / duration);
+    const ease = t * (2 - t); // ease-out
+
+    const curTx = (tx + dx) + (dx * 0.5) * ease;
+    const curDy = (dy) + (dy * 0.5) * ease;
+    const curS  = sc * (1 - ease * 0.95);
+    const op    = 1 - t;
+
+    card.style.transform = [
+      `translateX(${curTx}px)`,
+      `translateY(${curDy}px)`,
+      `translateZ(${tz}px)`,
+      `rotateY(${ry}deg)`,
+      `rotateZ(${dx * 0.03 * ease}deg)`,
+      `scale(${curS})`,
+    ].join(' ');
+
+    card.style.opacity = op;
+    updateReflect(card, curS, curDy);
+
+    if (t < 1) requestAnimationFrame(animate);
+  };
+  requestAnimationFrame(animate);
 
   setTimeout(() => {
     const currentIdx = filtered.findIndex(t => t.id === tab.id);

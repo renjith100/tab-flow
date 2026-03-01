@@ -490,3 +490,15 @@ body::before {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ── ESCAPE-CLOSE ARC ── */
+/* linear timing + dense early keyframes = ease-in via position spacing, not per-segment easing.
+   Quarter-ellipse shape: y dominates early, x takes over late — like a natural wrist-flick.   */
+@keyframes cardPullOut {
+  0%   { transform: translateX(0)     translateY(0)      rotateZ(0deg)   scale(1);    opacity: 1; }
+  30%  { transform: translateX(8px)   translateY(-105px) rotateZ(1deg)   scale(0.9);  opacity: 0.95; }
+  52%  { transform: translateX(36px)  translateY(-192px) rotateZ(3deg)   scale(0.75); opacity: 0.8; }
+  70%  { transform: translateX(110px) translateY(-258px) rotateZ(5.5deg) scale(0.58); opacity: 0.55; }
+  85%  { transform: translateX(220px) translateY(-310px) rotateZ(7.5deg) scale(0.4);  opacity: 0.25; }
+  100% { transform: translateX(315px) translateY(-332px) rotateZ(9deg)   scale(0.27); opacity: 0; }
+}
