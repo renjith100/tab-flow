@@ -786,6 +786,14 @@ async function reloadTabs() {
   // A newer reload was scheduled while we were awaiting — discard this result
   if (seq !== reloadSeq) return;
 
+  // A close animation may have started while the Chrome API calls were in flight.
+  // Re-check here so we never call buildCards() mid-animation.
+  if (isAnimatingRemoval) {
+    clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(reloadTabs, 300);
+    return;
+  }
+
   ({ allTabs, mainItems } = buildAllModels(freshChromeTabs, freshGroups));
 
   // If inside a group, refresh the group reference or fall back to main view
