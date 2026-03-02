@@ -765,6 +765,15 @@ async function init() {
 
 // ── Live sync: re-fetch and rebuild when tabs change externally ────────────────
 async function reloadTabs() {
+  // Don't rebuild while a close animation is running — buildCards() would destroy
+  // the DOM element the rAF loop is writing to, making the animation invisible.
+  // Defer until the animation completes (isAnimatingRemoval resets after ~880ms).
+  if (isAnimatingRemoval) {
+    clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(reloadTabs, 300);
+    return;
+  }
+
   const seq          = reloadSeq;
   const focusedId    = filtered[active]?.id;
   const currentQuery = searchEl.value.toLowerCase().trim();
