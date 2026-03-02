@@ -765,6 +765,15 @@ async function init() {
 
 // ── Live sync: re-fetch and rebuild when tabs change externally ────────────────
 async function reloadTabs() {
+  // Don't rebuild while a close animation is running — buildCards() would destroy
+  // the DOM element the rAF loop is writing to, making the animation invisible.
+  // Defer until the animation completes (isAnimatingRemoval resets after ~880ms).
+  if (isAnimatingRemoval) {
+    clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(reloadTabs, 300);
+    return;
+  }
+
   const seq          = reloadSeq;
   const focusedId    = filtered[active]?.id;
   const currentQuery = searchEl.value.toLowerCase().trim();
@@ -776,6 +785,14 @@ async function reloadTabs() {
 
   // A newer reload was scheduled while we were awaiting — discard this result
   if (seq !== reloadSeq) return;
+
+  // A close animation may have started while the Chrome API calls were in flight.
+  // Re-check here so we never call buildCards() mid-animation.
+  if (isAnimatingRemoval) {
+    clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(reloadTabs, 300);
+    return;
+  }
 
   ({ allTabs, mainItems } = buildAllModels(freshChromeTabs, freshGroups));
 
