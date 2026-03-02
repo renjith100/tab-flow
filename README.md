@@ -22,7 +22,7 @@ A Chrome extension that brings Cover Flow to your browser tabs — navigate all 
 
 | Key                          | Action                                   |
 | ---------------------------- | ---------------------------------------- |
-| `⌘.` / `Ctrl+Shift+.`        | Open TabFlow (global shortcut)           |
+| `⌘⇧.` / `Ctrl+Shift+.`       | Open TabFlow (global shortcut)           |
 | `←` / `→`                    | Navigate carousel                        |
 | `↓`                          | Enter a tab group                        |
 | `↑`                          | Exit a tab group back to main view       |
