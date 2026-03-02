@@ -18,6 +18,16 @@
     "service_worker": "background.js"
   },
 
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "mac":     "Command+Shift+Period",
+        "default": "Ctrl+Shift+Period"
+      },
+      "description": "Open TabFlow"
+    }
+  },
+
   "permissions": ["tabs", "windows", "sessions", "tabGroups"],
 
   "icons": {

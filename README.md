@@ -20,15 +20,18 @@ A Chrome extension that brings Cover Flow to your browser tabs — navigate all 
 
 ## Keyboard Shortcuts
 
-| Key             | Action                                   |
-| --------------- | ---------------------------------------- |
-| `←` / `→`       | Navigate carousel                        |
-| `↓`             | Enter a tab group                        |
-| `↑`             | Exit a tab group back to main view       |
-| `↵` Enter       | Open the selected tab (or enter a group) |
-| `Esc`           | Close the active tab                     |
-| `/`             | Focus search                             |
-| `⌘Z` / `Ctrl+Z` | Undo last closed tab                     |
+| Key                          | Action                                   |
+| ---------------------------- | ---------------------------------------- |
+| `⌘⇧.` / `Ctrl+Shift+.`       | Open TabFlow (global shortcut)           |
+| `←` / `→`                    | Navigate carousel                        |
+| `↓`                          | Enter a tab group                        |
+| `↑`                          | Exit a tab group back to main view       |
+| `↵` Enter                    | Open the selected tab (or enter a group) |
+| `Esc`                        | Close the active tab                     |
+| `/`                          | Focus search                             |
+| `⌘Z` / `Ctrl+Z`              | Undo last closed tab                     |
+
+> **Customise the shortcut:** `chrome://extensions/shortcuts` — Chrome lets you remap it to anything you prefer.
 
 ---
 
