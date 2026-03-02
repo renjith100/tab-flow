@@ -1,6 +1,6 @@
 // ── models.js — Tab & Group data model builders ───────────────────────────────
 // Pure data transformations only. No DOM, no Chrome API calls after load.
-// getDomain() is defined in popup.js and available as a global at call time.
+// getDomain() is defined in newtab.js and available as a global at call time.
 
 const SELF_URL = chrome.runtime.getURL('newtab.html');
 
@@ -66,7 +66,7 @@ function buildOrderedMainItems(chromeTabs, tabItems, groupCards) {
   return mainItems;
 }
 
-// Top-level entry point called by popup.js.
+// Top-level entry point called by newtab.js.
 // Returns { allTabs, mainItems } ready to assign to module state.
 function buildAllModels(chromeTabs, chromeGroups) {
   const tabItems   = chromeTabs

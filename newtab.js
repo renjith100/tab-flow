@@ -376,13 +376,11 @@ function closeActiveTab() {
     const duration  = 750;
 
     // Correcting reflection during animation requires a JS loop to keep it "physical"
-    const { sc } = getPos(idx - active);
-
     const animate = (now) => {
       const elapsed = now - startTime;
       const t = Math.min(1, elapsed / duration);
 
-      // Matches @keyframes card-pull-out in popup.css
+      // Matches @keyframes card-pull-out in newtab.css
       // 0%: 0, 0, 0deg, 1.00; 30%: 8, -105, 1deg, 0.90; 52%: 36, -192, 3deg, 0.75; etc.
       let tx, dy, rz, s, op;
       if (t < 0.3) {
