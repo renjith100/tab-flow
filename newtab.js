@@ -351,6 +351,18 @@ function removeTabFromModels(tab, filteredIdx) {
   }
 }
 
+// ── Shared close-path helper ───────────────────────────────────────────────────
+// Called by both closeActiveTab and poofClose after removing the last tab from a
+// group. Clears the animation guards and exits the group view. Returns true when
+// it handled the exit so the caller can early-return immediately.
+function exitGroupIfEmpty(tabId) {
+  if (viewMode !== 'group' || filtered.length !== 0) return false;
+  tabsClosing.delete(tabId);
+  isAnimatingRemoval = false;
+  exitGroup();
+  return true;
+}
+
 // ── Close active tab (Escape key in newtab mode) ──────────────────────────────
 
 function closeActiveTab() {
@@ -419,12 +431,7 @@ function closeActiveTab() {
     chrome.tabs.remove(item.id);
     showUndoToast(item.title);
 
-    if (viewMode === 'group' && filtered.length === 0) {
-      tabsClosing.delete(item.id);
-      isAnimatingRemoval = false;
-      exitGroup();
-      return;
-    }
+    if (exitGroupIfEmpty(item.id)) return;
 
     active = Math.min(active, Math.max(0, filtered.length - 1));
 
@@ -698,12 +705,7 @@ function poofClose(idx, card, dx, dy) {
     chrome.tabs.remove(tab.id);
     showUndoToast(tab.title);
 
-    if (viewMode === 'group' && filtered.length === 0) {
-      tabsClosing.delete(tab.id);
-      isAnimatingRemoval = false;
-      exitGroup();
-      return;
-    }
+    if (exitGroupIfEmpty(tab.id)) return;
 
     if (currentIdx < active)       active = active - 1;
     else if (currentIdx === active) active = Math.min(active, Math.max(0, filtered.length - 1));
