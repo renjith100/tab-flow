@@ -69,7 +69,7 @@ tab-flow/
 ├── background.js       Service worker — handles toolbar icon click
 ├── newtab.html         Full-page UI (primary interface)
 ├── newtab.css          All styles
-├── models.js           Pure data model layer — no DOM, no Chrome API
+├── models.js           Pure data model layer — minimal Chrome API (self-URL)
 ├── newtab.js           All UI logic — Cover Flow, tab groups, search, drag
 └── icons/
     ├── generate.html   Open in browser to generate PNG icons
