@@ -356,7 +356,7 @@ function removeTabFromModels(tab, filteredIdx) {
 // group. Clears the animation guards and exits the group view. Returns true when
 // it handled the exit so the caller can early-return immediately.
 function exitGroupIfEmpty(tabId) {
-  if (viewMode !== 'group' || filtered.length !== 0) return false;
+  if (viewMode !== 'group' || activeGroup.tabs.length !== 0) return false;
   tabsClosing.delete(tabId);
   isAnimatingRemoval = false;
   exitGroup();
