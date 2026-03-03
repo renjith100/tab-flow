@@ -363,7 +363,7 @@ applyFilterToSource(source, query)
        group: group title includes query
 ```
 
-Search is **scoped to the current context**: when inside a group it only searches that group's tabs. Pressing `Esc` inside the search box clears the filter and blurs the input (it does **not** close a tab).
+Search is **scoped to the current context**: when inside a group it only searches that group's tabs. Pressing `Esc` inside the search box follows the global behavior and closes the active tab.
 
 ---
 
