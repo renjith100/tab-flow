@@ -419,7 +419,12 @@ function closeActiveTab() {
     chrome.tabs.remove(item.id);
     showUndoToast(item.title);
 
-    if (viewMode === 'group' && filtered.length === 0) { exitGroup(); return; }
+    if (viewMode === 'group' && filtered.length === 0) {
+      tabsClosing.delete(item.id);
+      isAnimatingRemoval = false;
+      exitGroup();
+      return;
+    }
 
     active = Math.min(active, Math.max(0, filtered.length - 1));
 
@@ -693,7 +698,12 @@ function poofClose(idx, card, dx, dy) {
     chrome.tabs.remove(tab.id);
     showUndoToast(tab.title);
 
-    if (viewMode === 'group' && filtered.length === 0) { exitGroup(); return; }
+    if (viewMode === 'group' && filtered.length === 0) {
+      tabsClosing.delete(tab.id);
+      isAnimatingRemoval = false;
+      exitGroup();
+      return;
+    }
 
     if (currentIdx < active)       active = active - 1;
     else if (currentIdx === active) active = Math.min(active, Math.max(0, filtered.length - 1));
