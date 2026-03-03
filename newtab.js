@@ -515,11 +515,10 @@ document.addEventListener('keydown', e => {
   const inSearch = document.activeElement === searchEl;
 
   if (inSearch) {
-    if (e.key === 'Escape')          { searchEl.value = ''; searchEl.blur(); applyFilter(''); }
-    else if (e.key === 'Enter')      { searchEl.blur(); openTab(); }
-    else if (e.key === 'ArrowLeft')  { e.preventDefault(); searchEl.blur(); go(-1); }
-    else if (e.key === 'ArrowRight') { e.preventDefault(); searchEl.blur(); go(1); }
-    return;
+    if (e.key === 'Enter')           { searchEl.blur(); openTab(); return; }
+    else if (e.key === 'ArrowLeft')  { e.preventDefault(); searchEl.blur(); go(-1); return; }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); searchEl.blur(); go(1); return; }
+    // Fall through for Escape (close tab) and ArrowUp/Down (navigation/exit group)
   }
 
   if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); undoClose(); return; }
