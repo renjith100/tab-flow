@@ -2,8 +2,6 @@
 
 A Chrome extension that brings Cover Flow to your browser tabs — navigate all your open tabs in a beautiful 3D carousel, keyboard-first.
 
-![TabFlow Cover Flow carousel](icons/icon128.png)
-
 ---
 
 ## Features
@@ -22,15 +20,18 @@ A Chrome extension that brings Cover Flow to your browser tabs — navigate all 
 
 ## Keyboard Shortcuts
 
-| Key | Action |
-|-----|--------|
-| `←` / `→` | Navigate carousel |
-| `↓` | Enter a tab group |
-| `↑` | Exit a tab group back to main view |
-| `↵` Enter | Open the selected tab (or enter a group) |
-| `Esc` | Close the active tab (newtab mode) |
-| `/` | Focus search |
-| `⌘Z` / `Ctrl+Z` | Undo last closed tab |
+| Key                          | Action                                   |
+| ---------------------------- | ---------------------------------------- |
+| `⌘⇧.` / `Ctrl+Shift+.`       | Open TabFlow (global shortcut)           |
+| `←` / `→`                    | Navigate carousel                        |
+| `↓`                          | Enter a tab group                        |
+| `↑`                          | Exit a tab group back to main view       |
+| `↵` Enter                    | Open the selected tab (or enter a group) |
+| `Esc`                        | Close the active tab                     |
+| `/`                          | Focus search                             |
+| `⌘Z` / `Ctrl+Z`              | Undo last closed tab                     |
+
+> **Customise the shortcut:** `chrome://extensions/shortcuts` — Chrome lets you remap it to anything you prefer.
 
 ---
 
@@ -67,9 +68,9 @@ tab-flow/
 ├── manifest.json       Chrome Extension Manifest V3
 ├── background.js       Service worker — handles toolbar icon click
 ├── newtab.html         Full-page UI (primary interface)
-├── popup.html          Popup UI (fallback, same logic)
-├── popup.css           All styles for both HTML shells
-├── popup.js            All UI logic — Cover Flow, tab groups, search, drag
+├── newtab.css          All styles
+├── models.js           Pure data model layer — minimal Chrome API (self-URL)
+├── newtab.js           All UI logic — Cover Flow, tab groups, search, drag
 └── icons/
     ├── generate.html   Open in browser to generate PNG icons
     ├── icon16.png
@@ -81,12 +82,12 @@ tab-flow/
 
 ## Permissions
 
-| Permission | Why it's needed |
-|------------|-----------------|
-| `tabs` | Read tab titles, URLs, favicons; switch and close tabs |
-| `windows` | Focus the correct window when switching to a tab |
-| `sessions` | Restore the most recently closed tab (undo) |
-| `tabGroups` | Read Chrome tab group names and colors |
+| Permission  | Why it's needed                                        |
+| ----------- | ------------------------------------------------------ |
+| `tabs`      | Read tab titles, URLs, favicons; switch and close tabs |
+| `windows`   | Focus the correct window when switching to a tab       |
+| `sessions`  | Restore the most recently closed tab (undo)            |
+| `tabGroups` | Read Chrome tab group names and colors                 |
 
 ---
 
@@ -94,7 +95,9 @@ tab-flow/
 
 No build step — it's plain HTML, CSS, and JavaScript. Edit any file and click **Reload** on the extension card in `chrome://extensions`.
 
-The same `popup.js` file runs in both `newtab.html` and `popup.html` contexts. The constant `IS_NEWTAB` (detected from `window.location.pathname`) switches behaviour where the two modes differ (e.g. Escape closes the active tab in newtab mode vs. closing the popup window).
+## How It Works — Full Technical Reference
+
+- [How It Works](how-it-works.md)
 
 ---
 

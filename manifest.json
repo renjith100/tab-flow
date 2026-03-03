@@ -2,27 +2,37 @@
   "manifest_version": 3,
   "name": "TabFlow",
   "description": "Cover Flow tab switcher — find any tab at a glance",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "homepage_url": "https://github.com/renjith100/tab-flow",
-
   "action": {
     "default_title": "TabFlow",
     "default_icon": {
-      "16":  "icons/icon16.png",
-      "48":  "icons/icon48.png",
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
   },
-
   "background": {
     "service_worker": "background.js"
   },
-
-  "permissions": ["tabs", "windows", "sessions", "tabGroups"],
-
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "mac": "Command+Shift+Period",
+        "default": "Ctrl+Shift+Period"
+      },
+      "description": "Open TabFlow"
+    }
+  },
+  "permissions": [
+    "tabs",
+    "windows",
+    "sessions",
+    "tabGroups"
+  ],
   "icons": {
-    "16":  "icons/icon16.png",
-    "48":  "icons/icon48.png",
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   }
 }

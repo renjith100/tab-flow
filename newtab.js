@@ -7,6 +7,13 @@ let cardEls         = [];      // persistent DOM refs — never destroyed on nav
 let viewMode        = 'main';  // 'main' | 'group'
 let activeGroup     = null;    // group item currently being browsed
 let currentWindowId = null;    // id of the window TabFlow is running in
+let isAnimatingRemoval = false; // block new deletions while one is in progress
+let tabsClosing     = new Set(); // ids of tabs currently animating for removal
+
+function releaseGuards(tabId) {
+  tabsClosing.delete(tabId);
+  isAnimatingRemoval = false;
+}
 
 // ── Tab group color map ────────────────────────────────────────────────────────
 const GROUP_COLORS = {
@@ -72,6 +79,23 @@ function getPos(offset) {
     op: p.op,
     zi: p.zi,
   };
+}
+
+// ── updateReflect: applies physical mirror reflection ─────────────────────────
+// For real-world physics, the reflection should stay on the "floor".
+// In WebKit, -webkit-box-reflect offset is scaled by the element's transform.
+// If card height is H, gap to mirror is G, and card moves dy:
+// Total Screen Offset = (H + G - 2*dy).
+// Required CSS Offset = (Total Screen Offset / scale) - H.
+function updateReflect(card, sc, dy = 0, far = false) {
+  if (far) {
+    card.style.webkitBoxReflect = 'none';
+    return;
+  }
+  // H=224, G=24 => H+G=248. sc is the current animated scale.
+  const s = Math.max(0.01, sc); // prevent division by zero
+  const offset = ((248 - 2 * dy) / s - 224).toFixed(1);
+  card.style.webkitBoxReflect = `below ${offset}px linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 68%)`;
 }
 
 // ── buildCards: create DOM once (on init or after filtering) ──────────────────
@@ -157,6 +181,27 @@ function buildCards() {
         ring.appendChild(makeFallback(t.domain));
       }
 
+      if (t.audible) {
+        card.classList.add('is-audible');
+        const audioWrapper = document.createElement('div');
+        audioWrapper.className = 'audio-intensity-wrapper';
+        const audioBar = document.createElement('div');
+        audioBar.className = 'audio-intensity-bar';
+        // Randomize everything for a truly unique "signature" per tab
+        const pulseDur  = (0.7 + Math.random() * 0.9).toFixed(2); // 0.7s - 1.6s
+        const shiftDur  = (2.0 + Math.random() * 3.0).toFixed(2); // 2.0s - 5.0s
+        const animDelay = (Math.random() * -5.0).toFixed(2);      // deep phase offset
+        const pulseSc   = (0.7 + Math.random() * 0.3).toFixed(2); // 0.7 - 1.0 peak width
+
+        audioBar.style.setProperty('--pulse-dur',   `${pulseDur}s`);
+        audioBar.style.setProperty('--shift-dur',   `${shiftDur}s`);
+        audioBar.style.setProperty('--anim-delay',  `${animDelay}s`);
+        audioBar.style.setProperty('--pulse-scale', pulseSc);
+        
+        audioWrapper.appendChild(audioBar);
+        card.appendChild(audioWrapper);
+      }
+
       const titleEl = document.createElement('div');
       titleEl.className = 'card-title';
       titleEl.textContent = t.title;
@@ -238,6 +283,9 @@ function updatePositions({ instant = false } = {}) {
   }
 
   cardEls.forEach((card, i) => {
+    const item = filtered[i];
+    if (item?.id && tabsClosing.has(item.id)) return;
+
     const offset = i - active;
     const { tx, tz, ry, sc, op, zi } = getPos(offset);
     const far = Math.abs(offset) > 4;
@@ -249,6 +297,9 @@ function updatePositions({ instant = false } = {}) {
     card.style.zIndex        = zi;
     card.style.pointerEvents = far ? 'none' : 'auto';
     card.classList.toggle('is-active', i === active);
+
+    // Cover Flow reflection — offset corrected per scale so every card sits on the same shelf
+    updateReflect(card, sc, 0, far);
 
     if (instant) {
       card.offsetHeight;       // force reflow so "no-transition" frame commits
@@ -305,34 +356,105 @@ function removeTabFromModels(tab, filteredIdx) {
   }
 }
 
+// ── Shared close-path helper ───────────────────────────────────────────────────
+// Called by both closeActiveTab and poofClose after removing the last tab from a
+// group. Clears the animation guards and exits the group view. Returns true when
+// it handled the exit so the caller can early-return immediately.
+function exitGroupIfEmpty(tabId) {
+  if (viewMode !== 'group' || activeGroup.tabs.length !== 0) return false;
+  releaseGuards(tabId);
+  exitGroup();
+  return true;
+}
+
 // ── Close active tab (Escape key in newtab mode) ──────────────────────────────
+
 function closeActiveTab() {
-  if (!filtered.length) return;
+  if (!filtered.length || isAnimatingRemoval) return;
   const idx  = active;
   const item = filtered[idx];
   if (!item || item.type !== 'tab') return;
   const card = cardEls[idx];
   if (!card) return;
 
-  // Red glow for 100ms so the user sees what's about to be deleted, then poof up
-  card.classList.add('will-close');
-  setTimeout(() => {
-    card.classList.remove('will-close');
-    card.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 1, 1), opacity 0.2s ease';
-    card.style.transform  = 'translateX(0) translateY(-160px) rotateZ(-4deg) scale(0.05)';
-    card.style.opacity    = '0';
+  isAnimatingRemoval = true;
+  tabsClosing.add(item.id);
 
-    setTimeout(() => {
-      const currentIdx = filtered.findIndex(t => t.id === item.id);
-      if (currentIdx === -1) return; // already removed by a concurrent close
-      removeTabFromModels(item, currentIdx);
-      chrome.tabs.remove(item.id);
-      showUndoToast(item.title);
-      if (viewMode === 'group' && filtered.length === 0) { exitGroup(); return; }
-      active = Math.min(active, Math.max(0, filtered.length - 1));
+  // Flash red glow (same as drag-close), then arc out — freeze transition before removing
+  // the class so the border snaps back without any flash triggering the old jump bug
+  card.classList.add('will-close');
+
+  setTimeout(() => {
+    card.style.transition = 'none';
+    card.style.zIndex = '200';
+
+    const startTime = performance.now();
+    const duration  = 750;
+
+    // Correcting reflection during animation requires a JS loop to keep it "physical"
+    const animate = (now) => {
+      const elapsed = now - startTime;
+      const t = Math.min(1, elapsed / duration);
+
+      // Matches @keyframes card-pull-out in newtab.css
+      // 0%: 0, 0, 0deg, 1.00; 30%: 8, -105, 1deg, 0.90; 52%: 36, -192, 3deg, 0.75; etc.
+      let tx, dy, rz, s, op;
+      if (t < 0.3) {
+        const r = t / 0.3;
+        tx = 8 * r; dy = -105 * r; rz = 1 * r; s = 1 - 0.1 * r; op = 1 - 0.05 * r;
+      } else if (t < 0.52) {
+        const r = (t - 0.3) / 0.22;
+        tx = 8 + (36-8)*r; dy = -105 + (-192 - -105)*r; rz = 1 + (3-1)*r; s = 0.9 - 0.15*r; op = 0.95 - 0.15*r;
+      } else if (t < 0.7) {
+        const r = (t - 0.52) / 0.18;
+        tx = 36 + (110-36)*r; dy = -192 + (-258 - -192)*r; rz = 3 + (5.5-3)*r; s = 0.75 - 0.17*r; op = 0.8 - 0.25*r;
+      } else if (t < 0.85) {
+        const r = (t - 0.7) / 0.15;
+        tx = 110 + (220-110)*r; dy = -258 + (-310 - -258)*r; rz = 5.5 + (7.5-5.5)*r; s = 0.58 - 0.18*r; op = 0.55 - 0.3*r;
+      } else {
+        const r = (t - 0.85) / 0.15;
+        tx = 220 + (315-220)*r; dy = -310 + (-332 - -310)*r; rz = 7.5 + (9-7.5)*r; s = 0.4 - 0.13*r; op = 0.25 - 0.25*r;
+      }
+
+      card.style.transform = `translateX(${tx}px) translateY(${dy}px) rotateZ(${rz}deg) scale(${s})`;
+      card.style.opacity = op;
+      updateReflect(card, s, dy);
+
+      if (t < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }, 120);
+
+  setTimeout(() => {
+    const currentIdx = filtered.findIndex(t => t.id === item.id);
+    if (currentIdx === -1) {
+      releaseGuards(item.id);
+      return; // already removed by a concurrent close
+    }
+
+    const cardEl = cardEls[currentIdx];
+
+    removeTabFromModels(item, currentIdx);
+    chrome.tabs.remove(item.id);
+    showUndoToast(item.title);
+
+    if (exitGroupIfEmpty(item.id)) return;
+
+    active = Math.min(active, Math.max(0, filtered.length - 1));
+
+    if (cardEl) {
+      cardEl.remove();
+      cardEls.splice(currentIdx, 1);
+    }
+
+    releaseGuards(item.id);
+
+    if (filtered.length === 0) {
       buildCards();
-    }, 260);
-  }, 100);
+    } else {
+      updatePositions();
+    }
+  }, 120 + 760); // glow delay + animation duration
 }
 
 // ── Tab group navigation ───────────────────────────────────────────────────────
@@ -476,6 +598,13 @@ function initDrag(e, idx) {
   drag.y0    = p.clientY;
   drag.base  = getPos(idx - active);
   drag.moved = false;
+
+  const item = filtered[idx];
+  if (item?.id && tabsClosing.has(item.id)) {
+    drag.on = false;
+    return;
+  }
+
   const card = cardEls[idx];
   card.style.transition = 'border-color 0.15s ease, box-shadow 0.15s ease';
   card.style.zIndex = '200';
@@ -506,6 +635,9 @@ function moveDrag(e) {
 
   card.style.opacity = op * (1 - Math.min(1, dist / DRAG_CLOSE) * 0.35);
   card.classList.toggle('will-close', dist >= DRAG_CLOSE);
+
+  // Update physical reflection during drag
+  updateReflect(card, sc, dy);
 }
 
 function endDrag(e) {
@@ -529,35 +661,77 @@ function endDrag(e) {
 }
 
 function poofClose(idx, card, dx, dy) {
-  const tab = filtered[idx]; // capture by identity before any async delay
-  const { tx, tz, ry } = drag.base;
-  card.style.transition = 'transform 0.22s cubic-bezier(0.4, 0, 1, 1), opacity 0.18s ease';
-  card.style.transform  = [
-    `translateX(${tx + dx * 1.5}px)`,
-    `translateY(${dy * 1.5}px)`,
-    `translateZ(${tz}px)`,
-    `rotateY(${ry}deg)`,
-    `rotateZ(${dx * 0.03}deg)`,
-    `scale(0.05)`,
-  ].join(' ');
-  card.style.opacity = '0';
+  const tab = filtered[idx];
+  if (!tab || tabsClosing.has(tab.id)) return;
+  tabsClosing.add(tab.id);
+  isAnimatingRemoval = true;
+
+  const { tx, tz, ry, sc } = drag.base;
+
+  card.style.transition = 'none';
+
+  const startTime = performance.now();
+  const duration  = 220;
+
+  const animate = (now) => {
+    const elapsed = now - startTime;
+    const t = Math.min(1, elapsed / duration);
+    const ease = t * (2 - t); // ease-out
+
+    const curTx = (tx + dx) + (dx * 0.5) * ease;
+    const curDy = (dy) + (dy * 0.5) * ease;
+    const curS  = sc * (1 - ease * 0.95);
+    const op    = 1 - t;
+
+    card.style.transform = [
+      `translateX(${curTx}px)`,
+      `translateY(${curDy}px)`,
+      `translateZ(${tz}px)`,
+      `rotateY(${ry}deg)`,
+      `rotateZ(${dx * 0.03 * ease}deg)`,
+      `scale(${curS})`,
+    ].join(' ');
+
+    card.style.opacity = op;
+    updateReflect(card, curS, curDy);
+
+    if (t < 1) requestAnimationFrame(animate);
+  };
+  requestAnimationFrame(animate);
 
   setTimeout(() => {
     const currentIdx = filtered.findIndex(t => t.id === tab.id);
-    if (currentIdx === -1) return; // already removed by a concurrent close
+    if (currentIdx === -1) {
+      releaseGuards(tab.id);
+      return; // already removed by a concurrent close
+    }
+
+    const cardEl = cardEls[currentIdx];
+
     removeTabFromModels(tab, currentIdx);
 
     // Actually close the Chrome tab
     chrome.tabs.remove(tab.id);
     showUndoToast(tab.title);
 
-    if (viewMode === 'group' && filtered.length === 0) { exitGroup(); return; }
+    if (exitGroupIfEmpty(tab.id)) return;
 
     if (currentIdx < active)       active = active - 1;
     else if (currentIdx === active) active = Math.min(active, Math.max(0, filtered.length - 1));
     // idx > active: right-side deletion, centre card unaffected
 
-    buildCards();
+    if (cardEl) {
+      cardEl.remove();
+      cardEls.splice(currentIdx, 1);
+    }
+
+    releaseGuards(tab.id);
+
+    if (filtered.length === 0) {
+      buildCards();
+    } else {
+      updatePositions();
+    }
   }, 230);
 }
 
@@ -587,6 +761,9 @@ async function init() {
   if (hintExitGroupEl) hintExitGroupEl.style.display = 'none';
   filtered = [...mainItems];
 
+  // Calculate the middle for a symmetric starting view if possible
+  const midPoint = Math.floor(mainItems.length / 2);
+
   // Centre on whichever tab (or its group card) is currently active in Chrome
   const currentTab = activeTabs[0];
   if (currentTab) {
@@ -595,9 +772,10 @@ async function init() {
         ? item.id === currentTab.id
         : item.tabs.some(t => t.id === currentTab.id)
     );
-    active = idx >= 0 ? idx : 0;
+    // If we found the active tab, use it. Otherwise, default to the middle for symmetry.
+    active = idx >= 0 ? idx : midPoint;
   } else {
-    active = 0;
+    active = midPoint;
   }
 
   buildCards();
@@ -605,6 +783,15 @@ async function init() {
 
 // ── Live sync: re-fetch and rebuild when tabs change externally ────────────────
 async function reloadTabs() {
+  // Don't rebuild while a close animation is running — buildCards() would destroy
+  // the DOM element the rAF loop is writing to, making the animation invisible.
+  // Defer until the animation completes (isAnimatingRemoval resets after ~880ms).
+  if (isAnimatingRemoval) {
+    clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(reloadTabs, 300);
+    return;
+  }
+
   const seq          = reloadSeq;
   const focusedId    = filtered[active]?.id;
   const currentQuery = searchEl.value.toLowerCase().trim();
@@ -616,6 +803,14 @@ async function reloadTabs() {
 
   // A newer reload was scheduled while we were awaiting — discard this result
   if (seq !== reloadSeq) return;
+
+  // A close animation may have started while the Chrome API calls were in flight.
+  // Re-check here so we never call buildCards() mid-animation.
+  if (isAnimatingRemoval) {
+    clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(reloadTabs, 300);
+    return;
+  }
 
   ({ allTabs, mainItems } = buildAllModels(freshChromeTabs, freshGroups));
 
@@ -661,7 +856,7 @@ chrome.tabs.onRemoved.addListener((_, removeInfo) => {
 chrome.tabs.onUpdated.addListener((_, changeInfo, tab) => {
   if (tab.windowId === currentWindowId &&
       ('title' in changeInfo || 'favIconUrl' in changeInfo ||
-       'groupId' in changeInfo || 'url' in changeInfo)) {
+       'groupId' in changeInfo || 'url' in changeInfo || 'audible' in changeInfo)) {
     scheduleReload();
   }
 });
