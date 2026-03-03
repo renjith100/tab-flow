@@ -8,7 +8,7 @@ This section is a maintainer's guide to the complete working of the extension: e
 
 When the user clicks the TabFlow toolbar icon, Chrome fires `chrome.action.onClicked`. The **service worker** (`background.js`) handles this event.
 
-```
+```text
 User clicks icon
       │
       ▼
@@ -80,7 +80,7 @@ At the very bottom of `newtab.js`, `init()` is called directly — no `DOMConten
 
 ### Build pipeline
 
-```
+```text
 chrome.tabs.query()  →  chromeTabs[]
 chrome.tabGroups.query()  →  chromeGroups[]
          │
@@ -124,7 +124,7 @@ let tabsClosing = new Set(); // tab IDs currently mid-animation (prevents re-clo
 
 The relationship between these arrays at runtime:
 
-```
+```text
 allTabs[]      — every individual tab in the window
     ▼ subset
 mainItems[]    — top-level items: ungrouped tabs + one group card per group
@@ -140,7 +140,7 @@ cardEls[]      — DOM <div class="card"> elements, index-matched to filtered[]
 
 ## 5. Initialization Flow
 
-```
+```text
 init()
   │
   ├─ Promise.all([
@@ -218,7 +218,7 @@ The `card.offsetHeight` read forces a synchronous reflow, committing the "no-tra
 
 Called on every navigation, filter change, or after a close. Iterates `cardEls[]`, computes `offset = i - active` for each, looks up the transform, and writes it to `card.style`. CSS's `transition` property on `.card` (400ms ease-out-expo) does the interpolation automatically.
 
-```
+```text
 updatePositions()
   │
   ├─ Update #cur / #tot counter display
@@ -302,7 +302,7 @@ A single trackpad swipe fires many `wheel` events. The 290ms `wheelLock` debounc
 
 ### State when in group mode
 
-```
+```text
 viewMode = 'group'
 activeGroup = <the GroupCard item>
 filtered = [...activeGroup.tabs]    ← a copy of the group's tab array
@@ -310,7 +310,7 @@ filtered = [...activeGroup.tabs]    ← a copy of the group's tab array
 
 ### `enterGroup(group)`
 
-```
+```text
 enterGroup(group)
   │
   ├─ viewMode    = 'group'
@@ -323,7 +323,7 @@ enterGroup(group)
 
 ### `exitGroup()`
 
-```
+```text
 exitGroup()
   │
   ├─ Find the group card's index in mainItems[]
@@ -341,19 +341,19 @@ exitGroup()
 
 Pressing `/` focuses the search `<input>`. Typing is debounced 150ms before calling `applyFilter()`.
 
-```
+```text
 searchEl 'input' event
   │
   ├─ clearTimeout(searchTimer)
   └─ searchTimer = setTimeout(() => applyFilter(value), 150)
-
+```text
 applyFilter(q)
   │
   ├─ source = viewMode === 'group' ? activeGroup.tabs : mainItems
   ├─ filtered = applyFilterToSource(source, q)
   ├─ active = 0
   └─ buildCards()
-
+```text
 applyFilterToSource(source, query)
   │
   └─ Returns source items where:
@@ -380,7 +380,7 @@ There are two ways to close a tab: pressing Escape (keyboard) and drag-to-close 
 
 Full timing breakdown:
 
-```
+```text
 t = 0ms     closeActiveTab() called
               isAnimatingRemoval = true
               tabsClosing.add(item.id)
@@ -414,7 +414,7 @@ t = 880ms   Cleanup:
 
 The piecewise animation keyframes replicated in JS:
 
-```
+```text
  Time  │  translateX  │  translateY  │  rotateZ  │  scale  │  opacity
 ──────────────────────────────────────────────────────────────────────
   0%   │    0 px      │    0 px      │   0°      │  1.00   │  1.00
@@ -429,7 +429,7 @@ The piecewise animation keyframes replicated in JS:
 
 ### 10b. Drag-to-close — `initDrag / moveDrag / endDrag / poofClose`
 
-```
+```text
 mousedown / touchstart on a card
   │
   initDrag(e, idx)
@@ -453,6 +453,7 @@ mouseup / touchend
     ├─ dist < 85px OR not moved → restore card position (updatePositions)
     └─ dist >= 85px AND moved   → poofClose(idx, card, dx, dy)
 
+```text
 poofClose(idx, card, dx, dy)
   │
   ├─ tabsClosing.add(tab.id), isAnimatingRemoval = true
@@ -477,7 +478,7 @@ poofClose(idx, card, dx, dy)
 
 Called by both close paths. Keeps `filtered`, `allTabs`, `mainItems`, and each group's `.tabs[]` in sync:
 
-```
+```text
 removeTabFromModels(tab, filteredIdx)
   │
   ├─ filtered.splice(filteredIdx, 1)
@@ -516,7 +517,7 @@ function scheduleReload() {
 
 ### `reloadTabs()` flow
 
-```
+```text
 reloadTabs()
   │
   ├─ GUARD: if isAnimatingRemoval → defer (clearTimeout + setTimeout(reloadTabs, 300))
@@ -546,7 +547,7 @@ reloadTabs()
 
 Without the `isAnimatingRemoval` guard at the top of `reloadTabs()`, this sequence caused invisible animations:
 
-```
+```text
 t=0      Escape #1 → closeActiveTab()  (isAnimatingRemoval=true, card element captured)
 t=880    Cleanup: chrome.tabs.remove(tab1) → fires onRemoved → scheduleReload() [timer: t+400]
 t=900    Escape #2 → closeActiveTab()  (new card captured in closure)
@@ -568,7 +569,7 @@ if (isAnimatingRemoval) {
 
 After the animation completes at t=880ms, `isAnimatingRemoval` becomes `false`. The next deferred call to `reloadTabs()` (at ~t=1180ms) succeeds and rebuilds the DOM cleanly.
 
-```
+```text
 t=0      Escape #1 → isAnimatingRemoval=true
 t=880    Cleanup: isAnimatingRemoval=false; chrome.tabs.remove(tab1); scheduleReload() [t+400]
 t=900    Escape #2 → isAnimatingRemoval=true; animation starts on live card ✓
@@ -582,7 +583,7 @@ t=1880   reloadTabs() fires → isAnimatingRemoval=false → rebuilds from Chrom
 
 ## 13. Undo Toast
 
-```
+```text
 showUndoToast(title)
   │
   ├─ Updates #toastLabel text
@@ -606,7 +607,7 @@ undoClose()   (⌘Z or Undo button click)
 
 ## 14. Favicon Resolution — `favUrl(tab)`
 
-```
+```text
 favUrl(tab)
   │
   ├─ tab.favIconUrl starts with 'http'?
@@ -634,7 +635,7 @@ If an `<img>` fails to load (`onerror`), it is replaced with a fallback `<div>` 
 
 **Reflection math:** During close animations the card's Y position changes every frame. The reflection offset must be recalculated on each frame using:
 
-```
+```text
 offset = ((cardH + gap - 2×dy) / scale) - cardH
        = ((248 - 2×dy) / sc) - 224
 ```
