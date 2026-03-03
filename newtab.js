@@ -10,6 +10,11 @@ let currentWindowId = null;    // id of the window TabFlow is running in
 let isAnimatingRemoval = false; // block new deletions while one is in progress
 let tabsClosing     = new Set(); // ids of tabs currently animating for removal
 
+function releaseGuards(tabId) {
+  tabsClosing.delete(tabId);
+  isAnimatingRemoval = false;
+}
+
 // ── Tab group color map ────────────────────────────────────────────────────────
 const GROUP_COLORS = {
   grey: '#9ca3af', gray: '#9ca3af',
@@ -357,8 +362,7 @@ function removeTabFromModels(tab, filteredIdx) {
 // it handled the exit so the caller can early-return immediately.
 function exitGroupIfEmpty(tabId) {
   if (viewMode !== 'group' || activeGroup.tabs.length !== 0) return false;
-  tabsClosing.delete(tabId);
-  isAnimatingRemoval = false;
+  releaseGuards(tabId);
   exitGroup();
   return true;
 }
@@ -423,7 +427,10 @@ function closeActiveTab() {
 
   setTimeout(() => {
     const currentIdx = filtered.findIndex(t => t.id === item.id);
-    if (currentIdx === -1) return; // already removed by a concurrent close
+    if (currentIdx === -1) {
+      releaseGuards(item.id);
+      return; // already removed by a concurrent close
+    }
 
     const cardEl = cardEls[currentIdx];
 
@@ -440,8 +447,7 @@ function closeActiveTab() {
       cardEls.splice(currentIdx, 1);
     }
 
-    tabsClosing.delete(item.id);
-    isAnimatingRemoval = false;
+    releaseGuards(item.id);
 
     if (filtered.length === 0) {
       buildCards();
@@ -695,7 +701,10 @@ function poofClose(idx, card, dx, dy) {
 
   setTimeout(() => {
     const currentIdx = filtered.findIndex(t => t.id === tab.id);
-    if (currentIdx === -1) return; // already removed by a concurrent close
+    if (currentIdx === -1) {
+      releaseGuards(tab.id);
+      return; // already removed by a concurrent close
+    }
 
     const cardEl = cardEls[currentIdx];
 
@@ -716,8 +725,7 @@ function poofClose(idx, card, dx, dy) {
       cardEls.splice(currentIdx, 1);
     }
 
-    tabsClosing.delete(tab.id);
-    isAnimatingRemoval = false;
+    releaseGuards(tab.id);
 
     if (filtered.length === 0) {
       buildCards();
