@@ -46,7 +46,7 @@ At the very bottom of `newtab.js`, `init()` is called directly — no `DOMConten
 
 ## 3. Data Model Layer (`models.js`)
 
-`models.js` is a pure data transformation layer. It has no DOM access and makes no Chrome API calls (the Chrome API is only used at module load time to read `chrome.runtime.getURL('newtab.html')` for self-filtering).
+`models.js` is a pure data transformation layer with no runtime tab or window API calls. Its only Chrome API usage is a static `chrome.runtime.getURL('newtab.html')` call used for self-URL derivation.
 
 ### Data shapes
 
