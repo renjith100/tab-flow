@@ -346,6 +346,7 @@ searchEl 'input' event
   │
   ├─ clearTimeout(searchTimer)
   └─ searchTimer = setTimeout(() => applyFilter(value), 150)
+```
 ```text
 applyFilter(q)
   │
@@ -353,6 +354,7 @@ applyFilter(q)
   ├─ filtered = applyFilterToSource(source, q)
   ├─ active = 0
   └─ buildCards()
+```
 ```text
 applyFilterToSource(source, query)
   │
