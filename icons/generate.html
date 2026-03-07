@@ -5,18 +5,28 @@
   <title>TabFlow — Generate Icons</title>
   <style>
     body { font-family: sans-serif; background: #111; color: #eee; padding: 32px; }
-    canvas { border: 1px solid #333; margin: 8px; border-radius: 8px; }
-    button { margin-top: 24px; padding: 10px 24px; background: #8b5cf6; color: #fff;
+    .preview-row { display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap; margin-bottom: 32px; }
+    .preview-block { text-align: center; }
+    .preview-block p { color: #888; font-size: 12px; margin: 6px 0 0; }
+    .swatch { display: inline-flex; padding: 12px; border-radius: 10px; }
+    .swatch.dark  { background: #3c3c3c; }
+    .swatch.light { background: #e8e8e8; }
+    canvas { display: block; }
+    button { margin-top: 8px; padding: 10px 24px; background: #8b5cf6; color: #fff;
              border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }
     button:hover { background: #7c3aed; }
-    p { color: #888; margin-top: 12px; font-size: 13px; }
+    h3 { color: #aaa; font-size: 13px; font-weight: normal; margin: 0 0 12px; }
   </style>
 </head>
 <body>
   <h2>TabFlow Icon Generator</h2>
-  <p>Click the button — icons are downloaded automatically and saved to this folder.</p>
 
-  <div id="previews"></div>
+  <h3>Preview — dark toolbar</h3>
+  <div id="previews-dark" class="preview-row"></div>
+
+  <h3>Preview — light toolbar</h3>
+  <div id="previews-light" class="preview-row"></div>
+
   <button onclick="generateAll()">Download All Icons</button>
 
   <script>
@@ -37,65 +47,68 @@
     }
 
     function drawIcon(ctx, size) {
-      const r = Math.max(2, Math.round(size * 0.18));
+      // No background — transparent canvas
 
-      // Dark background with subtle centre glow
-      const bgGrad = ctx.createRadialGradient(size * 0.5, size * 0.4, 0, size * 0.5, size * 0.5, size * 0.75);
-      bgGrad.addColorStop(0, '#12102a');
-      bgGrad.addColorStop(1, '#07070d');
-      roundRectPath(ctx, 0, 0, size, size, r);
-      ctx.fillStyle = bgGrad;
-      ctx.fill();
+      const cw  = size * 0.28;   // card width — fills canvas edge to edge
+      const cch = size * 0.68;   // centre card height
+      const sch = size * 0.52;   // side card height
+      const cy  = size * 0.50;   // vertical centre
+      const cr  = Math.max(1, size * 0.06);  // card corner radius
+      const strokeW = Math.max(1.5, size * 0.022);  // bold stroke, visible at all sizes
 
-      // Three cards — miniature Cover Flow
-      const cw  = size * 0.21;
-      const cch = size * 0.52;   // centre card height
-      const sch = size * 0.38;   // side card height
-      const cy  = size * 0.5;
-      const cr  = Math.max(1, size * 0.05);
-
-      // Left card
+      // --- Left card ---
       ctx.save();
-      ctx.translate(size * 0.24, cy + size * 0.02);
-      ctx.rotate(-0.38);
+      ctx.translate(size * 0.21, cy + size * 0.02);
+      ctx.rotate(-0.34);
       roundRectPath(ctx, -cw / 2, -sch / 2, cw, sch, cr);
-      ctx.fillStyle = 'rgba(139, 92, 246, 0.32)';
+      ctx.fillStyle = 'rgba(167, 139, 250, 0.82)';
       ctx.fill();
-      ctx.strokeStyle = 'rgba(139, 92, 246, 0.25)';
-      ctx.lineWidth = Math.max(0.5, size * 0.01);
+      ctx.strokeStyle = 'rgba(139, 92, 246, 0.95)';
+      ctx.lineWidth = strokeW;
       ctx.stroke();
       ctx.restore();
 
-      // Right card
+      // --- Right card ---
       ctx.save();
-      ctx.translate(size * 0.76, cy + size * 0.02);
-      ctx.rotate(0.38);
+      ctx.translate(size * 0.79, cy + size * 0.02);
+      ctx.rotate(0.34);
       roundRectPath(ctx, -cw / 2, -sch / 2, cw, sch, cr);
-      ctx.fillStyle = 'rgba(139, 92, 246, 0.32)';
+      ctx.fillStyle = 'rgba(167, 139, 250, 0.82)';
       ctx.fill();
-      ctx.strokeStyle = 'rgba(139, 92, 246, 0.25)';
-      ctx.lineWidth = Math.max(0.5, size * 0.01);
+      ctx.strokeStyle = 'rgba(139, 92, 246, 0.95)';
+      ctx.lineWidth = strokeW;
       ctx.stroke();
       ctx.restore();
 
-      // Centre card — violet, glowing
+      // --- Centre card — solid violet with shadow ---
       ctx.save();
-      ctx.shadowColor = 'rgba(139, 92, 246, 0.7)';
-      ctx.shadowBlur  = size * 0.18;
+      if (size >= 48) {
+        ctx.shadowColor = 'rgba(109, 40, 217, 0.60)';
+        ctx.shadowBlur  = size * 0.16;
+        ctx.shadowOffsetY = size * 0.03;
+      }
       roundRectPath(ctx, size * 0.5 - cw / 2, cy - cch / 2, cw, cch, cr);
       ctx.fillStyle = '#8b5cf6';
       ctx.fill();
       ctx.restore();
 
-      // Subtle shelf line
-      if (size >= 48) {
-        ctx.beginPath();
-        ctx.moveTo(size * 0.08, cy + cch / 2 + size * 0.04);
-        ctx.lineTo(size * 0.92, cy + cch / 2 + size * 0.04);
-        ctx.strokeStyle = 'rgba(139, 92, 246, 0.25)';
-        ctx.lineWidth = Math.max(0.5, size * 0.008);
-        ctx.stroke();
-      }
+      // Light edge on centre card (drawn without shadow)
+      ctx.save();
+      roundRectPath(ctx, size * 0.5 - cw / 2, cy - cch / 2, cw, cch, cr);
+      ctx.strokeStyle = 'rgba(220, 210, 255, 0.70)';
+      ctx.lineWidth = strokeW;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function makeCanvas(size, displaySize) {
+      const canvas = document.createElement('canvas');
+      canvas.width  = displaySize;
+      canvas.height = displaySize;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(displaySize / size, displaySize / size);
+      drawIcon(ctx, size);
+      return canvas;
     }
 
     function generateAll() {
@@ -115,20 +128,36 @@
       });
     }
 
-    // Show previews on load
     window.onload = () => {
-      const wrap = document.getElementById('previews');
+      const darkWrap  = document.getElementById('previews-dark');
+      const lightWrap = document.getElementById('previews-light');
+
       SIZES.forEach(size => {
-        const displaySize = Math.max(size, 64); // show at least 64px for visibility
-        const canvas = document.createElement('canvas');
-        canvas.width  = displaySize;
-        canvas.height = displaySize;
-        canvas.title  = `${size}×${size}`;
-        const ctx = canvas.getContext('2d');
-        // Scale up small sizes for preview
-        ctx.scale(displaySize / size, displaySize / size);
-        drawIcon(ctx, size);
-        wrap.appendChild(canvas);
+        const displaySize = Math.max(size, 64);
+
+        // Dark swatch
+        const darkBlock = document.createElement('div');
+        darkBlock.className = 'preview-block';
+        const darkSwatch = document.createElement('div');
+        darkSwatch.className = 'swatch dark';
+        darkSwatch.appendChild(makeCanvas(size, displaySize));
+        darkBlock.appendChild(darkSwatch);
+        const darkLabel = document.createElement('p');
+        darkLabel.textContent = `${size}×${size}`;
+        darkBlock.appendChild(darkLabel);
+        darkWrap.appendChild(darkBlock);
+
+        // Light swatch
+        const lightBlock = document.createElement('div');
+        lightBlock.className = 'preview-block';
+        const lightSwatch = document.createElement('div');
+        lightSwatch.className = 'swatch light';
+        lightSwatch.appendChild(makeCanvas(size, displaySize));
+        lightBlock.appendChild(lightSwatch);
+        const lightLabel = document.createElement('p');
+        lightLabel.textContent = `${size}×${size}`;
+        lightBlock.appendChild(lightLabel);
+        lightWrap.appendChild(lightBlock);
       });
     };
   </script>
