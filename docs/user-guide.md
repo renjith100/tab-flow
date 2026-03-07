@@ -58,7 +58,7 @@ Open TabFlow again (`Cmd+Shift+.` or `Ctrl+Shift+.`).
 
 This time, instead of navigating card by card, press `/`.
 
-The search bar appears at the top. Start typing any part of a page title or domain name — for example, `github` or `docs`. The carousel instantly filters to show only the matching tabs.
+The search bar appears at the top. Start typing any part of a page title or domain name — for example, `GitHub` or `docs`. The carousel instantly filters to show only the matching tabs.
 
 When you see the tab you want in the centre, press `Enter` to open it. If you want to cancel the search and go back to the full carousel, press `Esc`.
 
@@ -117,13 +117,13 @@ You now know everything you need to use TabFlow every day:
 
 ## Keyboard shortcuts — quick reference
 
-| Key | What it does |
-|---|---|
-| `Cmd+Shift+.` / `Ctrl+Shift+.` | Open TabFlow |
-| `←` `→` | Move through the carousel |
-| `Enter` | Open the selected tab |
-| `↓` | Look inside a tab group |
-| `↑` | Go back from a tab group |
-| `Esc` | Close the selected tab |
-| `/` | Search your tabs |
-| `Cmd+Z` / `Ctrl+Z` | Undo the last close |
+| Key                            | What it does              |
+| ------------------------------ | ------------------------- |
+| `Cmd+Shift+.` / `Ctrl+Shift+.` | Open TabFlow              |
+| `←` `→`                        | Move through the carousel |
+| `Enter`                        | Open the selected tab     |
+| `↓`                            | Look inside a tab group   |
+| `↑`                            | Go back from a tab group  |
+| `Esc`                          | Close the selected tab    |
+| `/`                            | Search your tabs          |
+| `Cmd+Z` / `Ctrl+Z`             | Undo the last close       |
