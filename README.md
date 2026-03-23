@@ -7,7 +7,6 @@ Navigate, search, group, and close tabs visually — keyboard-first, no screensh
 
 [![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Install-blue?logo=google-chrome&style=for-the-badge)](https://chromewebstore.google.com/detail/tabflow/lekecebmffemmgemgpmplpekbahbghno)
 
-[![JavaScript](https://img.shields.io/badge/JavaScript-61%25-yellow?style=flat-square&logo=javascript&logoColor=white)](https://github.com/renjith100/tab-flow)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-orange?style=flat-square)](https://developer.chrome.com/docs/extensions/mv3)
 
 Watch the demo:
@@ -47,14 +46,6 @@ For development / sideloading:
 
 Default shortcut: `⌘⇧.` (Mac) / `Ctrl+Shift+.` (Windows/Linux)
 You can change it in `chrome://extensions/shortcuts`
-
-## Demo
-
-Watch this short video to see it in action:
-
-[![Demo video](https://img.youtube.com/vi/6c_-F-O46zg/0.jpg)](https://youtu.be/6c_-F-O46zg)
-
-(Click the image above to play on YouTube)
 
 ## How It Works
 
