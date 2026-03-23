@@ -1,106 +1,81 @@
+<div align="center">
+
 # TabFlow
 
-A Chrome extension that brings Cover Flow to your browser tabs — navigate all your open tabs in a beautiful 3D carousel, keyboard-first.
+A beautiful Cover Flow-style 3D tab switcher for Chrome
+Navigate, search, group, and close tabs visually — keyboard-first, no screenshots, full-page carousel.
 
----
+[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Install-blue?logo=google-chrome&style=for-the-badge)](https://chromewebstore.google.com/detail/tabflow/lekecebmffemmgemgpmplpekbahbghno)
+
+[![JavaScript](https://img.shields.io/badge/JavaScript-61%25-yellow?style=flat-square&logo=javascript&logoColor=white)](https://github.com/renjith100/tab-flow)
+[![Manifest V3](https://img.shields.io/badge/Manifest-V3-orange?style=flat-square)](https://developer.chrome.com/docs/extensions/mv3)
+
+Watch the demo:
+
+[![Demo video](https://img.youtube.com/vi/6c_-F-O46zg/0.jpg)](https://youtu.be/6c_-F-O46zg)
+
+</div>
 
 ## Features
 
-- **Cover Flow carousel** — tabs arranged in a 3D perspective view, just like the original iTunes/iPhone Cover Flow
-- **Tab groups** — Chrome tab groups appear as a single card with floating favicons; drill into a group with `↓` and return with `↑`
-- **Keyboard-first** — navigate entirely without the mouse using arrow keys, Enter, Escape, and `/` for search
-- **Drag to close** — drag any card out of the row to close that tab with a satisfying poof animation
-- **Undo close** — accidentally closed a tab? Press `⌘Z` (or click the toast) to restore it instantly
-- **Search / filter** — press `/` and type to filter tabs by title or domain; search is scoped to the current group when inside one
-- **Full-page view** — opens as a new tab for maximum space, not a tiny popup
-- **Favicon-first cards** — uses each site's favicon as the card hero with automatic fallback to the Google favicon service
-- **Always centred** — opens with your currently active tab in the centre of the carousel
-
----
-
-## Keyboard Shortcuts
-
-| Key                          | Action                                   |
-| ---------------------------- | ---------------------------------------- |
-| `⌘⇧.` / `Ctrl+Shift+.`       | Open TabFlow (global shortcut)           |
-| `←` / `→`                    | Navigate carousel                        |
-| `↓`                          | Enter a tab group                        |
-| `↑`                          | Exit a tab group back to main view       |
-| `↵` Enter                    | Open the selected tab (or enter a group) |
-| `Esc`                        | Close the active tab                     |
-| `/`                          | Focus search                             |
-| `⌘Z` / `Ctrl+Z`              | Undo last closed tab                     |
-
-> **Customise the shortcut:** `chrome://extensions/shortcuts` — Chrome lets you remap it to anything you prefer.
-
----
+- 3D Cover Flow carousel — full-page, animated tab overview
+- Keyboard-first navigation — arrow keys, search (/), Enter to switch, Esc to close
+- Tab Groups — shown as stacked cards with floating favicons; ↓/↑ to drill in/out
+- Drag to close — swipe card sideways + poof animation
+- Undo close — ⌘Z restores recently closed tabs
+- Live search — filter by title or domain, scoped to current group
+- Centered active tab — opens with your current tab in focus
+- Favicon cards — clean look using Google's favicon service
 
 ## Installation
 
-TabFlow is not yet published to the Chrome Web Store. Install it as an unpacked extension:
+Easiest way — install directly from the Chrome Web Store:
 
-1. Clone or download this repository
-2. Open Chrome and go to `chrome://extensions`
-3. Enable **Developer mode** (toggle in the top-right corner)
-4. Click **Load unpacked**
-5. Select the `tab-flow` folder
+[→ Add to Chrome ←](https://chromewebstore.google.com/detail/tabflow/lekecebmffemmgemgpmplpekbahbghno)
 
-The TabFlow icon will appear in your toolbar. Click it to open the carousel.
+For development / sideloading:
 
-> **First launch:** Chrome will ask you to approve the permissions `tabs`, `windows`, `sessions`, and `tabGroups`. These are the minimum required to read, switch, close, and restore tabs.
+1. Clone the repo: `git clone https://github.com/renjith100/tab-flow.git`
 
----
+2. Open Chrome → go to `chrome://extensions/`
 
-## Generating Icons
+3. Enable Developer mode (top right)
 
-The icons need to be generated once before the extension works:
+4. Click **Load unpacked** → select the cloned folder
 
-1. Open `icons/generate.html` in any browser (drag the file into a tab)
-2. Click **Download All Icons**
-3. Move the three downloaded PNGs (`icon16.png`, `icon48.png`, `icon128.png`) into the `icons/` folder
+5. (Optional) Generate icons if needed: open `icons/generate.html` in Chrome
 
----
+Default shortcut: `⌘⇧.` (Mac) / `Ctrl+Shift+.` (Windows/Linux)
+You can change it in `chrome://extensions/shortcuts`
 
-## Project Structure
+## Demo
 
-```
-tab-flow/
-├── manifest.json       Chrome Extension Manifest V3
-├── background.js       Service worker — handles toolbar icon click
-├── newtab.html         Full-page UI (primary interface)
-├── newtab.css          All styles
-├── models.js           Pure data model layer — minimal Chrome API (self-URL)
-├── newtab.js           All UI logic — Cover Flow, tab groups, search, drag
-└── icons/
-    ├── generate.html   Open in browser to generate PNG icons
-    ├── icon16.png
-    ├── icon48.png
-    └── icon128.png
-```
+Watch this short video to see it in action:
 
----
+[![Demo video](https://img.youtube.com/vi/6c_-F-O46zg/0.jpg)](https://youtu.be/6c_-F-O46zg)
 
-## Permissions
+(Click the image above to play on YouTube)
 
-| Permission  | Why it's needed                                        |
-| ----------- | ------------------------------------------------------ |
-| `tabs`      | Read tab titles, URLs, favicons; switch and close tabs |
-| `windows`   | Focus the correct window when switching to a tab       |
-| `sessions`  | Restore the most recently closed tab (undo)            |
-| `tabGroups` | Read Chrome tab group names and colors                 |
+## How It Works
 
----
+See [how-it-works.md](how-it-works.md) for UI/keyboard details and architecture notes.
 
-## Development
+## Permissions Explained
 
-No build step — it's plain HTML, CSS, and JavaScript. Edit any file and click **Reload** on the extension card in `chrome://extensions`.
+`tabs`, `windows`, `sessions`, `tabGroups` — only what's needed to read/manage tabs, groups, and undo closes. No network, storage, or host permissions.
 
-## How It Works — Full Technical Reference
+## Privacy
 
-- [How It Works](how-it-works.md)
+No data collected or sent anywhere. See [PRIVACY.md](PRIVACY.md).
 
----
+## Contributing
+
+Early stage — welcome issues, feature requests, PRs!
+
+Ideas: dark mode, thumbnail previews (if permissions allow), sort options, better animations.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT © Renjith Abraham
+
+Star if you find it useful!
