@@ -89,24 +89,24 @@ body::after {
 
 .search-icon {
   position: absolute;
-  left: 14px;
+  left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text-dim);
+  color: rgba(255, 255, 255, 0.55);
   pointer-events: none;
 }
 
 .search {
-  width: 256px;
-  height: 38px;
-  padding: 0 18px 0 40px;
+  width: 400px;
+  height: 42px;
+  padding: 0 22px 0 46px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 20px;
   color: var(--text);
   font-family: 'Syne', sans-serif;
-  font-size: 13px;
-  font-weight: 400;
+  font-size: 15px;
+  font-weight: 500;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
