@@ -46,6 +46,20 @@ body::before {
   z-index: 0;
 }
 
+/* Edge vignette — pulls the eye toward the centered carousel */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 55%,
+    rgba(2, 2, 7, 0.55) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
 /* ── HEADER ── */
 .header {
   z-index: 10;
