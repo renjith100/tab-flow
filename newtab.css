@@ -401,6 +401,12 @@ body::after {
     0 0 48px rgba(239, 68, 68, 0.15) !important;
 }
 
+/* ── LEAVING (filter-out animation) ── */
+.card.is-leaving {
+  pointer-events: none;
+  z-index: 0;
+}
+
 /* ── GROUP CARD ── */
 .card.card-group {
   border-top: 3px solid var(--group-color, #9ca3af);
