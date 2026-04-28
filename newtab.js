@@ -9,6 +9,7 @@ let activeGroup     = null;    // group item currently being browsed
 let currentWindowId = null;    // id of the window TabFlow is running in
 let isAnimatingRemoval = false; // block new deletions while one is in progress
 let tabsClosing     = new Set(); // ids of tabs currently animating for removal
+let leavingByKey    = new Map(); // key -> { card, timer } — cards animating out from a filter diff
 
 function releaseGuards(tabId) {
   tabsClosing.delete(tabId);
@@ -577,12 +578,97 @@ function applyFilterToSource(source, query) {
     : [...source];
 }
 
+// ── applyFilterDiff: animate the transition from `filtered` to `newFiltered` ─
+// Survivors keep their DOM nodes and slide to new positions via the existing
+// .card transition. Leavers fade-and-shrink, then are removed from the DOM
+// after 280ms. Enterers start at opacity 0 / scale 0.6 and fade in to their
+// target transform via updatePositions(). Re-matches (a leaver whose key is
+// in newFiltered) are restored, not duplicated.
+function applyFilterDiff(newFiltered) {
+  // Build lookup of current cards by key
+  const oldByKey = new Map();
+  cardEls.forEach((card, i) => {
+    oldByKey.set(String(filtered[i].id), card);
+  });
+
+  const newCardEls = [];
+  const enterers = [];
+
+  newFiltered.forEach(item => {
+    const key = String(item.id);
+
+    // Re-match: a leaver whose key reappears — cancel the leave, restore.
+    if (leavingByKey.has(key)) {
+      const entry = leavingByKey.get(key);
+      clearTimeout(entry.timer);
+      leavingByKey.delete(key);
+      entry.card.classList.remove('is-leaving');
+      entry.card.style.opacity = '';
+      // transform will be reset by updatePositions
+      newCardEls.push(entry.card);
+      return;
+    }
+
+    // Survivor
+    if (oldByKey.has(key)) {
+      newCardEls.push(oldByKey.get(key));
+      oldByKey.delete(key);
+      return;
+    }
+
+    // Enterer
+    const card = createCardElement(item);
+    card.style.opacity = '0';
+    card.style.transform = 'scale(0.6)';
+    cardsEl.appendChild(card);
+    newCardEls.push(card);
+    enterers.push(card);
+  });
+
+  // Remaining entries in oldByKey are leavers
+  oldByKey.forEach((card, key) => {
+    card.classList.add('is-leaving');
+    card.style.opacity = '0';
+    // Append a scale to the existing transform so the card shrinks where it sits
+    card.style.transform = (card.style.transform || '') + ' scale(0.5)';
+    const timer = setTimeout(() => {
+      card.remove();
+      leavingByKey.delete(key);
+    }, 280);
+    leavingByKey.set(key, { card, timer });
+  });
+
+  // Swap state to the new filtered set
+  cardEls = newCardEls;
+  filtered = newFiltered;
+  active = 0;
+
+  // Empty state handling — the diff path doesn't go through buildCards's empty branch.
+  if (newFiltered.length === 0) {
+    emptyEl.classList.add('show');
+    curEl.textContent = '0';
+    totEl.textContent = '0';
+    detailEl.innerHTML = '';
+    return;
+  }
+  emptyEl.classList.remove('show');
+
+  // Force reflow so enterers' initial opacity:0 / scale(0.6) is committed
+  // before updatePositions() overwrites those properties with target values.
+  if (enterers.length) {
+    void cardsEl.offsetHeight;
+  }
+
+  // Survivors animate to new positions, enterers animate from seed values to
+  // target. Both via the existing .card CSS transition.
+  updatePositions();
+}
+
 function applyFilter(q) {
   const query  = q.toLowerCase().trim();
   const source = viewMode === 'group' ? activeGroup.tabs : mainItems;
-  filtered = applyFilterToSource(source, query);
-  active = 0;
-  buildCards();
+  const newFiltered = applyFilterToSource(source, query);
+  applyFilterDiff(newFiltered);
 }
 
 let searchTimer = null;
