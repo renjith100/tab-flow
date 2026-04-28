@@ -516,6 +516,8 @@ function crossFade(swapFn) {
   cardsEl.style.opacity = '0';
   setTimeout(() => {
     swapFn();
+    // Container becomes opaque immediately; cards are individually at opacity 0
+    // (seeded by buildCards({ stagger: true })) and fade in via the staggered reveal.
     cardsEl.style.opacity = '1';
   }, 180);
 }
@@ -527,7 +529,7 @@ function enterGroup(group) {
     filtered    = [...group.tabs];
     active      = 0;
     if (hintExitGroupEl) hintExitGroupEl.style.display = '';
-    buildCards();
+    buildCards({ stagger: true });
   });
 }
 
@@ -539,7 +541,7 @@ function exitGroup() {
     filtered    = [...mainItems];
     active      = groupIdx >= 0 ? groupIdx : 0;
     if (hintExitGroupEl) hintExitGroupEl.style.display = 'none';
-    buildCards();
+    buildCards({ stagger: true });
   });
 }
 
