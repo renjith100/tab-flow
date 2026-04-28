@@ -280,12 +280,14 @@ body::after {
   letter-spacing: 0.02em;
 }
 
-/* ── SHELF ── */
+/* ── SHELF ── viewport-wide horizon, anchored to the bottom of .stage-wrap */
 .shelf {
   position: absolute;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: 50%;
+  right: auto;
+  width: 100vw;
+  transform: translateX(-50%);
   height: 1px;
   background: linear-gradient(
     to right,
