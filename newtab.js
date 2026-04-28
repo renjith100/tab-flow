@@ -646,35 +646,47 @@ function applyFilterDiff(newFiltered) {
     const key = String(item.id);
 
     // Re-match: a leaver whose key reappears — cancel the leave, restore.
+    // Snap back via the existing transition; no stagger delay.
     if (leavingByKey.has(key)) {
       const entry = leavingByKey.get(key);
       clearTimeout(entry.timer);
       leavingByKey.delete(key);
       entry.card.classList.remove('is-leaving');
       entry.card.style.opacity = '';
+      entry.card.style.transitionDelay = '';
       // transform will be reset by updatePositions
       newCardEls.push(entry.card);
       return;
     }
 
-    // Survivor
+    // Survivor — clear any residual stagger delay from a prior reveal.
     if (oldByKey.has(key)) {
-      newCardEls.push(oldByKey.get(key));
+      const card = oldByKey.get(key);
+      card.style.transitionDelay = '';
+      newCardEls.push(card);
       oldByKey.delete(key);
       return;
     }
 
-    // Enterer
+    // Enterer — seed at opacity 0 / scale(0.6), set transition-delay based on
+    // its final position in newCardEls (active will be 0 after the diff).
     const card = createCardElement(item);
-    card.style.opacity = '0';
-    card.style.transform = 'scale(0.6)';
+    const position = newCardEls.length;
+    const delay = staggerDelayMs(position, 0);
+    if (delay !== null) {
+      card.style.opacity = '0';
+      card.style.transform = 'scale(0.6)';
+      card.style.transitionDelay = `${delay}ms`;
+    }
     cardsEl.appendChild(card);
     newCardEls.push(card);
     enterers.push(card);
   });
 
-  // Remaining entries in oldByKey are leavers
+  // Remaining entries in oldByKey are leavers — clear any stagger delay so the
+  // leave animation doesn't get pushed back, then run the existing fade-and-shrink.
   oldByKey.forEach((card, key) => {
+    card.style.transitionDelay = '';
     card.classList.add('is-leaving');
     card.style.opacity = '0';
     // Append a scale to the existing transform so the card shrinks where it sits
@@ -708,8 +720,15 @@ function applyFilterDiff(newFiltered) {
   }
 
   // Survivors animate to new positions, enterers animate from seed values to
-  // target. Both via the existing .card CSS transition.
+  // target with their staggered delay. Both via the existing .card CSS transition.
   updatePositions();
+
+  // Clear residual transition-delay so subsequent arrow-key navigation glides
+  // without inherited delays. Total stagger animation = STAGGER_CAP * STAGGER_MS
+  // + 400ms transition = 650ms; cleanup at 700ms.
+  if (enterers.length) {
+    setTimeout(clearAllTransitionDelays, 700);
+  }
 }
 
 function applyFilter(q) {
