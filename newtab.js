@@ -245,7 +245,7 @@ function createCardElement(item) {
 }
 
 // ── buildCards: wholesale rebuild — used on init and group transitions ───────
-function buildCards() {
+function buildCards({ stagger = false } = {}) {
   cardsEl.innerHTML = '';
   cardEls = [];
 
@@ -259,14 +259,27 @@ function buildCards() {
 
   emptyEl.classList.remove('show');
 
-  filtered.forEach(item => {
+  filtered.forEach((item, i) => {
     const card = createCardElement(item);
+    if (stagger) {
+      const delay = staggerDelayMs(i, active);
+      if (delay !== null) {
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.6)';
+        card.style.transitionDelay = `${delay}ms`;
+      }
+    }
     cardsEl.appendChild(card);
     cardEls.push(card);
   });
 
-  // Set initial positions instantly (suppress transition on first paint)
-  updatePositions({ instant: true });
+  if (stagger) {
+    void cardsEl.offsetHeight;       // commit seeded values before targets
+    updatePositions();               // animated reveal
+    setTimeout(clearAllTransitionDelays, 700);
+  } else {
+    updatePositions({ instant: true });
+  }
 }
 
 function makeFallback(domain) {
