@@ -98,7 +98,135 @@ function updateReflect(card, sc, dy = 0, far = false) {
   card.style.webkitBoxReflect = `below ${offset}px linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 68%)`;
 }
 
-// ── buildCards: create DOM once (on init or after filtering) ──────────────────
+// ── createCardElement: build the DOM for a single tab or group item ──────────
+// Returns the card element; does NOT append to cardsEl or push to cardEls.
+// Tags the card with dataset.key for diff-based filter updates.
+function createCardElement(item) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.key = String(item.id);
+
+  if (item.type === 'group') {
+    // ── Group card ────────────────────────────────────────────────────────────
+    card.classList.add('card-group');
+    const color = GROUP_COLORS[item.color] || '#9ca3af';
+    card.style.setProperty('--group-color', color);
+
+    // Favicon cluster (up to 4 tabs)
+    const cluster = document.createElement('div');
+    cluster.className = 'group-favicon-cluster';
+    item.tabs.slice(0, 4).forEach(tab => {
+      const fav = document.createElement('div');
+      fav.className = 'group-fav';
+      const url = favUrl(tab);
+      if (url) {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = tab.title;
+        img.onerror = function () { this.replaceWith(makeGroupFallback(tab.domain)); };
+        fav.appendChild(img);
+      } else {
+        fav.appendChild(makeGroupFallback(tab.domain));
+      }
+      cluster.appendChild(fav);
+    });
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'group-name';
+    nameEl.textContent = item.title || 'Tab Group';
+
+    const countEl = document.createElement('div');
+    countEl.className = 'group-count';
+    countEl.textContent = `${item.tabs.length} tab${item.tabs.length !== 1 ? 's' : ''}`;
+
+    card.appendChild(cluster);
+    card.appendChild(nameEl);
+    card.appendChild(countEl);
+
+  } else {
+    // ── Tab card ──────────────────────────────────────────────────────────────
+    const ring = document.createElement('div');
+    ring.className = 'fav-ring';
+
+    const url = favUrl(item);
+    if (url) {
+      const img = document.createElement('img');
+      img.className = 'fav-img';
+      img.src = url;
+      img.alt = item.title;
+      img.onerror = function () {
+        this.remove();
+        ring.appendChild(makeFallback(item.domain));
+      };
+      ring.appendChild(img);
+    } else {
+      ring.appendChild(makeFallback(item.domain));
+    }
+
+    if (item.audible) {
+      card.classList.add('is-audible');
+      const audioWrapper = document.createElement('div');
+      audioWrapper.className = 'audio-intensity-wrapper';
+      const audioBar = document.createElement('div');
+      audioBar.className = 'audio-intensity-bar';
+      // Randomize everything for a truly unique "signature" per tab
+      const pulseDur  = (0.7 + Math.random() * 0.9).toFixed(2); // 0.7s - 1.6s
+      const shiftDur  = (2.0 + Math.random() * 3.0).toFixed(2); // 2.0s - 5.0s
+      const animDelay = (Math.random() * -5.0).toFixed(2);      // deep phase offset
+      const pulseSc   = (0.7 + Math.random() * 0.3).toFixed(2); // 0.7 - 1.0 peak width
+
+      audioBar.style.setProperty('--pulse-dur',   `${pulseDur}s`);
+      audioBar.style.setProperty('--shift-dur',   `${shiftDur}s`);
+      audioBar.style.setProperty('--anim-delay',  `${animDelay}s`);
+      audioBar.style.setProperty('--pulse-scale', pulseSc);
+
+      audioWrapper.appendChild(audioBar);
+      card.appendChild(audioWrapper);
+    }
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'card-title';
+    titleEl.textContent = item.title;
+
+    const domainEl = document.createElement('div');
+    domainEl.className = 'card-domain';
+    domainEl.textContent = item.domain;
+
+    card.appendChild(ring);
+    card.appendChild(titleEl);
+    card.appendChild(domainEl);
+
+    // Drag-to-close only on tab cards. Look up the live index — the card's
+    // position in cardEls can change after a filter diff without re-creating
+    // the element, so the loop index is no longer reliable.
+    card.addEventListener('mousedown',  e => {
+      const idx = cardEls.indexOf(card);
+      if (idx !== -1) initDrag(e, idx);
+    });
+    card.addEventListener('touchstart', e => {
+      const idx = cardEls.indexOf(card);
+      if (idx !== -1) initDrag(e, idx);
+    }, { passive: false });
+  }
+
+  // Click handler — same shape for both types, distinguished by item.type
+  card.addEventListener('click', () => {
+    if (drag.moved) return;
+    const idx = cardEls.indexOf(card);
+    if (idx === -1) return; // card is leaving — ignore the click
+    if (idx === active) {
+      if (item.type === 'group') enterGroup(item);
+      else openTab();
+    } else {
+      active = idx;
+      updatePositions();
+    }
+  });
+
+  return card;
+}
+
+// ── buildCards: wholesale rebuild — used on init and group transitions ───────
 function buildCards() {
   cardsEl.innerHTML = '';
   cardEls = [];
@@ -113,117 +241,8 @@ function buildCards() {
 
   emptyEl.classList.remove('show');
 
-  filtered.forEach((t, i) => {
-    const card = document.createElement('div');
-    card.className = 'card';
-
-    if (t.type === 'group') {
-      // ── Group card ──────────────────────────────────────────────────────────
-      card.classList.add('card-group');
-      const color = GROUP_COLORS[t.color] || '#9ca3af';
-      card.style.setProperty('--group-color', color);
-
-      // Favicon cluster (up to 4 tabs)
-      const cluster = document.createElement('div');
-      cluster.className = 'group-favicon-cluster';
-      t.tabs.slice(0, 4).forEach(tab => {
-        const fav = document.createElement('div');
-        fav.className = 'group-fav';
-        const url = favUrl(tab);
-        if (url) {
-          const img = document.createElement('img');
-          img.src = url;
-          img.alt = tab.title;
-          img.onerror = function () { this.replaceWith(makeGroupFallback(tab.domain)); };
-          fav.appendChild(img);
-        } else {
-          fav.appendChild(makeGroupFallback(tab.domain));
-        }
-        cluster.appendChild(fav);
-      });
-
-      const nameEl = document.createElement('div');
-      nameEl.className = 'group-name';
-      nameEl.textContent = t.title || 'Tab Group';
-
-      const countEl = document.createElement('div');
-      countEl.className = 'group-count';
-      countEl.textContent = `${t.tabs.length} tab${t.tabs.length !== 1 ? 's' : ''}`;
-
-      card.appendChild(cluster);
-      card.appendChild(nameEl);
-      card.appendChild(countEl);
-
-      // Click: navigate to group card, or enter it if already active
-      card.addEventListener('click', () => {
-        if (drag.moved) return;
-        if (i === active) enterGroup(t);
-        else { active = i; updatePositions(); }
-      });
-
-    } else {
-      // ── Tab card (existing layout) ───────────────────────────────────────────
-      const ring = document.createElement('div');
-      ring.className = 'fav-ring';
-
-      const url = favUrl(t);
-      if (url) {
-        const img = document.createElement('img');
-        img.className = 'fav-img';
-        img.src = url;
-        img.alt = t.title;
-        img.onerror = function () {
-          this.remove();
-          ring.appendChild(makeFallback(t.domain));
-        };
-        ring.appendChild(img);
-      } else {
-        ring.appendChild(makeFallback(t.domain));
-      }
-
-      if (t.audible) {
-        card.classList.add('is-audible');
-        const audioWrapper = document.createElement('div');
-        audioWrapper.className = 'audio-intensity-wrapper';
-        const audioBar = document.createElement('div');
-        audioBar.className = 'audio-intensity-bar';
-        // Randomize everything for a truly unique "signature" per tab
-        const pulseDur  = (0.7 + Math.random() * 0.9).toFixed(2); // 0.7s - 1.6s
-        const shiftDur  = (2.0 + Math.random() * 3.0).toFixed(2); // 2.0s - 5.0s
-        const animDelay = (Math.random() * -5.0).toFixed(2);      // deep phase offset
-        const pulseSc   = (0.7 + Math.random() * 0.3).toFixed(2); // 0.7 - 1.0 peak width
-
-        audioBar.style.setProperty('--pulse-dur',   `${pulseDur}s`);
-        audioBar.style.setProperty('--shift-dur',   `${shiftDur}s`);
-        audioBar.style.setProperty('--anim-delay',  `${animDelay}s`);
-        audioBar.style.setProperty('--pulse-scale', pulseSc);
-        
-        audioWrapper.appendChild(audioBar);
-        card.appendChild(audioWrapper);
-      }
-
-      const titleEl = document.createElement('div');
-      titleEl.className = 'card-title';
-      titleEl.textContent = t.title;
-
-      const domainEl = document.createElement('div');
-      domainEl.className = 'card-domain';
-      domainEl.textContent = t.domain;
-
-      card.appendChild(ring);
-      card.appendChild(titleEl);
-      card.appendChild(domainEl);
-
-      // Drag-to-close only on tab cards
-      card.addEventListener('mousedown',  e => initDrag(e, i));
-      card.addEventListener('touchstart', e => initDrag(e, i), { passive: false });
-      card.addEventListener('click', () => {
-        if (drag.moved) return;
-        if (i === active) openTab();
-        else { active = i; updatePositions(); }
-      });
-    }
-
+  filtered.forEach(item => {
+    const card = createCardElement(item);
     cardsEl.appendChild(card);
     cardEls.push(card);
   });
