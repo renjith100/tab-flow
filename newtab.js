@@ -478,23 +478,39 @@ function closeActiveTab() {
 }
 
 // ── Tab group navigation ───────────────────────────────────────────────────────
+// Cross-fade the carousel container around a wholesale content swap.
+// 180ms out → swap → 180ms in. Total ~360ms — comparable to the filter
+// animation's perceived duration so the two transitions feel like the same family.
+function crossFade(swapFn) {
+  cardsEl.style.transition = 'opacity 0.18s ease';
+  cardsEl.style.opacity = '0';
+  setTimeout(() => {
+    swapFn();
+    cardsEl.style.opacity = '1';
+  }, 180);
+}
+
 function enterGroup(group) {
-  viewMode    = 'group';
-  activeGroup = group;
-  filtered    = [...group.tabs];
-  active      = 0;
-  if (hintExitGroupEl) hintExitGroupEl.style.display = '';
-  buildCards();
+  crossFade(() => {
+    viewMode    = 'group';
+    activeGroup = group;
+    filtered    = [...group.tabs];
+    active      = 0;
+    if (hintExitGroupEl) hintExitGroupEl.style.display = '';
+    buildCards();
+  });
 }
 
 function exitGroup() {
   const groupIdx = mainItems.findIndex(item => item.type === 'group' && item.id === activeGroup.id);
-  viewMode    = 'main';
-  activeGroup = null;
-  filtered    = [...mainItems];
-  active      = groupIdx >= 0 ? groupIdx : 0;
-  if (hintExitGroupEl) hintExitGroupEl.style.display = 'none';
-  buildCards();
+  crossFade(() => {
+    viewMode    = 'main';
+    activeGroup = null;
+    filtered    = [...mainItems];
+    active      = groupIdx >= 0 ? groupIdx : 0;
+    if (hintExitGroupEl) hintExitGroupEl.style.display = 'none';
+    buildCards();
+  });
 }
 
 // ── Undo (reopen last closed tab via Chrome sessions API) ─────────────────────
