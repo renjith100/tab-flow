@@ -24,6 +24,23 @@ const GROUP_COLORS = {
   pink: '#f472b6',  purple: '#c084fc', cyan: '#22d3ee',
 };
 
+// ── Stagger reveal config ─────────────────────────────────────────────────────
+const STAGGER_MS  = 50;   // delay per step of distance from active
+const STAGGER_CAP = 5;    // cards beyond ±5 don't stagger (already invisible)
+
+// Returns a delay in ms for the card at `index`, or null if it should not
+// stagger (and thus shouldn't be seeded for animation).
+function staggerDelayMs(index, activeIdx) {
+  const distance = Math.abs(index - activeIdx);
+  return distance > STAGGER_CAP ? null : distance * STAGGER_MS;
+}
+
+// Clear residual transition-delay from every card so subsequent navigation
+// (arrow keys, etc.) doesn't inherit a stagger delay.
+function clearAllTransitionDelays() {
+  cardEls.forEach(card => { card.style.transitionDelay = ''; });
+}
+
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const cardsEl    = document.getElementById('cards');
 const searchEl   = document.getElementById('search');
