@@ -56,7 +56,7 @@ Default shortcut: ⌘⇧. (Mac) / Ctrl+Shift+. (Windows/Linux) — change it at 
 
 1. Overview grid full — count + triage chips + several sections of cards
 2. Group-by Domain + the sort control, with age pills visible
-3. Triage chips in action ("Close all stale" / "Merge duplicates") or a section's "Close all"
+3. Triage chips in action ("N stale · Close all" / "N duplicates · Merge") or a section's "Close all"
 4. A card mid-close (poof) or the toolbar count badge in the chrome
 5. Cover Flow carousel (keep one, so existing users recognize it)
 

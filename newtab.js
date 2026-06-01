@@ -958,7 +958,7 @@ function closeGridTabs(ids) {
   lastGridClosedCount = ids.length;
   chrome.tabs.remove(ids, () => {
     void chrome.runtime.lastError; // ignore "no tab" if any already gone
-    showUndoToast(`${ids.length} tabs`);
+    showUndoToast(`${ids.length} tab${ids.length === 1 ? '' : 's'}`);
   });
 }
 

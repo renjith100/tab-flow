@@ -38,7 +38,7 @@ then Capture again.
    of cards. *(Capture)*
 2. **Group + sort** — flip **Group → Domain**; age pills visible; sort control in
    view. *(Capture)*
-3. **Triage chips** — a window with stale/duplicate tabs so the **"Close all stale" / "Merge duplicates"** chips show (or a section's "Close all"). *(Capture)*
+3. **Triage chips** — a window with stale/duplicate tabs so the **"N stale · Close all" / "N duplicates · Merge"** chips show (or a section's "Close all"). *(Capture)*
 4. **Cover Flow** — toggle to **≋ Cover Flow**. *(Capture)*
 5. **Toolbar count badge** — see below (needs browser chrome).
 
