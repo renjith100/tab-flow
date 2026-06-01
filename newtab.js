@@ -839,9 +839,10 @@ function applyControlState() {
 }
 
 async function renderGridView() {
+  // Scoped to the current window, like Cover Flow — keeps the view simple.
   const [chromeTabs, groups] = await Promise.all([
-    new Promise(r => chrome.tabs.query({}, r)),
-    new Promise(r => chrome.tabGroups.query({}, r)),
+    new Promise(r => chrome.tabs.query({ currentWindow: true }, r)),
+    new Promise(r => chrome.tabGroups.query({ windowId: chrome.windows.WINDOW_ID_CURRENT }, r)),
   ]);
 
   const selfUrl = chrome.runtime.getURL('newtab.html');
