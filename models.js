@@ -16,7 +16,7 @@ function chromeTabToTabItem(chromeTab) {
     favIconUrl:   chromeTab.favIconUrl || '',
     groupId:      chromeTab.groupId,
     audible:      chromeTab.audible || false,
-    lastAccessed: chromeTab.lastAccessed || 0,
+    lastAccessed: chromeTab.lastAccessed ?? null,
   };
 }
 

@@ -148,3 +148,13 @@ test('freshness: 1 when new, 0 at/after 7d, linear between', () => {
   assert.strictEqual(T.freshness(now - T.STALE_MS - 5, now), 0);
   assert.strictEqual(T.freshness(now - T.STALE_MS / 2, now), 0.5);
 });
+
+test('toCard handles null lastAccessed (unknown) as not-stale, no age', () => {
+  const now = 100 * T.STALE_MS;
+  const card = T.toCard(
+    { id: 9, windowId: 1, title: 'U', domain: 'u.com', url: 'https://u.com',
+      favIconUrl: '', audible: false, groupId: -1, lastAccessed: null }, now);
+  assert.strictEqual(card.stale, false);
+  assert.strictEqual(card.ageLabel, '');
+  assert.strictEqual(card.freshness, 0);
+});
