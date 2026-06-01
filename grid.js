@@ -61,18 +61,20 @@ function makeAgePill(card) {
   return pill;
 }
 
-// "Playing audio" indicator — a pulsing speaker badge on the card image.
-function makeAudioBadge() {
-  const b = document.createElement('div');
-  b.className = 'gc-audio';
-  b.title = 'Playing audio';
-  b.innerHTML =
-    '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" ' +
-    'stroke="currentColor" stroke-width="2" stroke-linejoin="round">' +
-    '<path d="M4 9v6h4l5 4V5L8 9H4z"/>' +
-    '<path d="M17 8.5a5 5 0 0 1 0 7" fill="none" stroke-linecap="round"/>' +
-    '</svg>';
-  return b;
+// "Playing audio" indicator — the same random moving intensity bar as Cover Flow
+// (reuses .audio-intensity-wrapper/.audio-intensity-bar + keyframes).
+function makeAudioBar() {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'audio-intensity-wrapper';
+  const bar = document.createElement('div');
+  bar.className = 'audio-intensity-bar';
+  // Randomize timing so each tab gets a unique "signature" (matches Cover Flow).
+  bar.style.setProperty('--pulse-dur',  `${(0.7 + Math.random() * 0.9).toFixed(2)}s`);
+  bar.style.setProperty('--shift-dur',  `${(2.0 + Math.random() * 3.0).toFixed(2)}s`);
+  bar.style.setProperty('--anim-delay', `${(Math.random() * -5.0).toFixed(2)}s`);
+  bar.style.setProperty('--pulse-scale', (0.7 + Math.random() * 0.3).toFixed(2));
+  wrapper.appendChild(bar);
+  return wrapper;
 }
 
 // One tab card.
@@ -86,8 +88,9 @@ function buildGridCard(card, ctx) {
   const banner = buildCardBanner(card);
   const pill = makeAgePill(card);
   if (pill) banner.appendChild(pill);
-  if (card.audible) banner.appendChild(makeAudioBadge());
   el.appendChild(banner);
+
+  if (card.audible) el.appendChild(makeAudioBar());
 
   const close = document.createElement('button');
   close.className = 'gc-close';
