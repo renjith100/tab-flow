@@ -25,12 +25,18 @@ importScripts('triage.js');
 const TONE_COLORS = { calm: '#3f3f46', warn: '#f59e0b', alert: '#ef4444' };
 
 async function updateBadge() {
-  const selfUrl = chrome.runtime.getURL(NEWTAB_URL);
-  const tabs = await chrome.tabs.query({});
-  const n = tabs.filter(t => t.url !== selfUrl).length;
+  try {
+    const selfUrl = chrome.runtime.getURL(NEWTAB_URL);
+    const tabs = await chrome.tabs.query({});
+    const n = tabs.filter(t => t.url !== selfUrl).length;
 
-  await chrome.action.setBadgeText({ text: n > 0 ? String(n) : '' });
-  await chrome.action.setBadgeBackgroundColor({ color: TONE_COLORS[countTone(n)] });
+    await chrome.action.setBadgeText({ text: n > 0 ? String(n) : '' });
+    await chrome.action.setBadgeBackgroundColor({ color: TONE_COLORS[countTone(n)] });
+  } catch (err) {
+    // Chrome APIs can reject transiently (e.g. during worker teardown);
+    // log instead of leaving an unhandled rejection.
+    console.error('TabFlow: updateBadge failed', err);
+  }
 }
 
 chrome.runtime.onStartup.addListener(updateBadge);
