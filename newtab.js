@@ -10,6 +10,19 @@ let currentWindowId = null;    // id of the window TabFlow is running in
 let isAnimatingRemoval = false; // block new deletions while one is in progress
 let tabsClosing     = new Set(); // ids of tabs currently animating for removal
 
+// ── View mode (grid | coverflow), persisted in localStorage ───────────────────
+const VIEW_KEY = 'tabflow:view';
+let currentView = (localStorage.getItem(VIEW_KEY) === 'coverflow') ? 'coverflow' : 'grid';
+
+function setView(view) {
+  currentView = (view === 'coverflow') ? 'coverflow' : 'grid';
+  localStorage.setItem(VIEW_KEY, currentView);
+  document.documentElement.setAttribute('data-view', currentView);
+  document.querySelectorAll('.vt-btn').forEach(b =>
+    b.classList.toggle('is-active', b.dataset.mode === currentView));
+  renderCurrentView();
+}
+
 function releaseGuards(tabId) {
   tabsClosing.delete(tabId);
   isAnimatingRemoval = false;
@@ -740,6 +753,27 @@ document.addEventListener('touchmove', moveDrag, { passive: false });
 document.addEventListener('touchend',  endDrag);
 
 // ── Init: load real Chrome tabs + tab groups ──────────────────────────────────
+// Replaced with the real implementation in Task 4.
+function renderGridView() {
+  document.getElementById('gridScroll').textContent = 'Grid coming up…';
+}
+
+// Dispatch rendering to the active view. Grid loads all windows; Cover Flow
+// keeps its current-window behavior in buildCards()/updatePositions().
+function renderCurrentView() {
+  if (currentView === 'grid') {
+    renderGridView();
+  } else {
+    buildCards();
+  }
+}
+
+// Wire the toggle buttons once.
+document.getElementById('viewToggle').addEventListener('click', e => {
+  const btn = e.target.closest('.vt-btn');
+  if (btn) setView(btn.dataset.mode);
+});
+
 async function init() {
   const [allChromeTabs, activeTabs, allGroups] = await Promise.all([
     new Promise(r => chrome.tabs.query({ currentWindow: true }, r)),
@@ -777,11 +811,17 @@ async function init() {
     active = midPoint;
   }
 
-  buildCards();
+  document.documentElement.setAttribute('data-view', currentView);
+  document.querySelectorAll('.vt-btn').forEach(b =>
+    b.classList.toggle('is-active', b.dataset.mode === currentView));
+  renderCurrentView();
 }
 
 // ── Live sync: re-fetch and rebuild when tabs change externally ────────────────
 async function reloadTabs() {
+  // In grid mode, just re-render the grid (it re-queries all windows itself).
+  if (currentView === 'grid') { renderGridView(); return; }
+
   // Don't rebuild while a close animation is running — buildCards() would destroy
   // the DOM element the rAF loop is writing to, making the animation invisible.
   // Defer until the animation completes (isAnimatingRemoval resets after ~880ms).

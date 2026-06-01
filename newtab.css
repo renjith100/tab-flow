@@ -548,3 +548,60 @@ body::before {
   85%  { transform: translateX(220px) translateY(-310px) rotateZ(7.5deg) scale(0.4);  opacity: 0.25; }
   100% { transform: translateX(315px) translateY(-332px) rotateZ(9deg)   scale(0.27); opacity: 0; }
 }
+
+/* ── VIEW MODE SWITCHING ── */
+/* In grid mode the body scrolls and content is top-aligned; in coverflow it stays centered. */
+html[data-view="grid"], html[data-view="grid"] body {
+  height: auto;
+  min-height: 100vh;
+  width: 100vw;
+  overflow-y: auto;
+  display: block;
+}
+
+/* Coverflow-only elements hidden in grid mode */
+html[data-view="grid"] .stage-wrap,
+html[data-view="grid"] .detail,
+html[data-view="grid"] .footer,
+html[data-view="grid"] .search-wrap { display: none; }
+
+/* Grid-only elements hidden in coverflow mode */
+html[data-view="coverflow"] .overview-header,
+html[data-view="coverflow"] .grid-scroll { display: none; }
+
+/* ── VIEW TOGGLE ── */
+.header { display: flex; align-items: center; gap: 18px; }
+.view-toggle {
+  display: flex; gap: 4px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 12px; padding: 3px;
+}
+.vt-btn {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600;
+  color: var(--text-dim); background: transparent; border: none;
+  padding: 5px 11px; border-radius: 9px; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.vt-btn.is-active { background: var(--violet-soft); color: var(--violet); }
+.vt-btn:hover:not(.is-active) { color: var(--text); }
+
+/* ── OVERVIEW HEADER (grid mode) ── */
+.overview-header {
+  width: 100%; max-width: 1400px; margin: 0 auto;
+  padding: 8px 28px 14px; display: flex; align-items: center;
+  justify-content: space-between; gap: 16px; flex-wrap: wrap;
+}
+.ov-count {
+  font-family: 'Fraunces', serif; font-style: italic; font-size: 22px;
+  color: var(--text);
+}
+.ov-count.tone-warn  { color: #fbbf24; }
+.ov-count.tone-alert { color: #f87171; }
+.ov-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── GRID SCROLL CONTAINER ── */
+.grid-scroll {
+  width: 100%; max-width: 1400px; margin: 0 auto;
+  padding: 0 28px 60px;
+}

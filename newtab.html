@@ -17,6 +17,15 @@
 
   <div class="header">
     <div class="logo">Tab<span class="v">Flow</span></div>
+    <div class="view-toggle" id="viewToggle">
+      <button class="vt-btn" id="vtGrid" data-mode="grid" title="Overview grid">⊞ Grid</button>
+      <button class="vt-btn" id="vtFlow" data-mode="coverflow" title="Cover Flow">≋ Cover Flow</button>
+    </div>
+  </div>
+
+  <div class="overview-header" id="overviewHeader">
+    <div class="ov-count" id="ovCount">— tabs open</div>
+    <div class="ov-chips" id="ovChips"></div>
   </div>
 
   <div class="search-wrap">
@@ -47,6 +56,8 @@
     <div class="empty" id="empty">No tabs match</div>
   </div>
 
+  <div class="grid-scroll" id="gridScroll"></div>
+
   <div class="detail" id="detail"></div>
 
   <div class="toast" id="toast">
@@ -55,6 +66,8 @@
   </div>
 
   <script src="models.js"></script>
+  <script src="triage.js"></script>
+  <script src="grid.js"></script>
   <script src="newtab.js"></script>
 </body>
 </html>
