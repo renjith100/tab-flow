@@ -59,13 +59,13 @@ function relativeAge(lastAccessed, now) {
   const s = Math.max(0, Math.floor((now - lastAccessed) / 1000));
   if (s < 60) return 'now';
   const m = Math.floor(s / 60);
-  if (m < 60) return m + 'm';
+  if (m < 60) return m + ' m';
   const h = Math.floor(m / 60);
-  if (h < 24) return h + 'h';
+  if (h < 24) return h + ' h';
   const d = Math.floor(h / 24);
-  if (d < 7) return d + 'd';
-  if (d < 30) return Math.floor(d / 7) + 'w';
-  return Math.floor(d / 30) + 'mo';
+  if (d < 7) return d + ' d';
+  if (d < 30) return Math.floor(d / 7) + ' w';
+  return Math.floor(d / 30) + ' mo';
 }
 
 // Return a sorted copy of cards. modes: 'recent' (default), 'oldest', 'name'.

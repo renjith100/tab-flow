@@ -82,11 +82,11 @@ test('relativeAge formats buckets', () => {
   assert.strictEqual(T.relativeAge(0, now), '');
   assert.strictEqual(T.relativeAge(undefined, now), '');
   assert.strictEqual(T.relativeAge(ago(59_000), now), 'now');
-  assert.strictEqual(T.relativeAge(ago(60_000), now), '1m');
-  assert.strictEqual(T.relativeAge(ago(60 * 60_000), now), '1h');
-  assert.strictEqual(T.relativeAge(ago(24 * 60 * 60_000), now), '1d');
-  assert.strictEqual(T.relativeAge(ago(7 * 24 * 60 * 60_000), now), '1w');
-  assert.strictEqual(T.relativeAge(ago(30 * 24 * 60 * 60_000), now), '1mo');
+  assert.strictEqual(T.relativeAge(ago(60_000), now), '1 m');
+  assert.strictEqual(T.relativeAge(ago(60 * 60_000), now), '1 h');
+  assert.strictEqual(T.relativeAge(ago(24 * 60 * 60_000), now), '1 d');
+  assert.strictEqual(T.relativeAge(ago(7 * 24 * 60 * 60_000), now), '1 w');
+  assert.strictEqual(T.relativeAge(ago(30 * 24 * 60 * 60_000), now), '1 mo');
 });
 
 test('sortCards orders and does not mutate', () => {
@@ -108,7 +108,7 @@ test('toCard carries lastAccessed and ageLabel', () => {
       favIconUrl: '', audible: false, groupId: -1,
       lastAccessed: now - 2 * 60 * 60_000 }, now);
   assert.strictEqual(card.lastAccessed, now - 2 * 60 * 60_000);
-  assert.strictEqual(card.ageLabel, '2h');
+  assert.strictEqual(card.ageLabel, '2 h');
 });
 
 test('buildGridSections ungroupedBy=domain keeps groups, clusters rest by domain', () => {
