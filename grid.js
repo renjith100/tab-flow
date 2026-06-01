@@ -138,7 +138,7 @@ function buildSectionEl(section, ctx) {
   const header = document.createElement('div');
   header.className = 'gs-header';
 
-  if (section.kind === 'group' && section.color) {
+  if (section.color) {
     const dot = document.createElement('span');
     dot.className = 'gs-dot';
     dot.style.background = GRID_GROUP_COLORS[section.color] || '#9ca3af';
@@ -172,8 +172,27 @@ function buildSectionEl(section, ctx) {
   return el;
 }
 
-// Render all sections into the container.
-function renderGrid(container, sections, ctx) {
+// A window divider row.
+function buildWindowHeader(row) {
+  const el = document.createElement('div');
+  el.className = 'gs-window-header';
+  if (row.isCurrent) el.classList.add('is-current');
+  const label = document.createElement('span');
+  label.className = 'gsw-label';
+  label.textContent = row.label;
+  el.appendChild(label);
+  const count = document.createElement('span');
+  count.className = 'gsw-count';
+  count.textContent = `${row.tabCount} ${row.tabCount === 1 ? 'tab' : 'tabs'}`;
+  el.appendChild(count);
+  return el;
+}
+
+// Render all rows: window-header rows as dividers, everything else as sections.
+function renderGrid(container, rows, ctx) {
   container.innerHTML = '';
-  for (const section of sections) container.appendChild(buildSectionEl(section, ctx));
+  for (const row of rows) {
+    if (row.kind === 'window-header') container.appendChild(buildWindowHeader(row));
+    else container.appendChild(buildSectionEl(row, ctx));
+  }
 }
