@@ -19,7 +19,9 @@ TabFlow's existing permissions (`tabs`, `tabGroups`, `windows`, `sessions`; the
 2. **Group-by control** — organize ungrouped tabs By Window or By Domain (Chrome groups always preserved as sections).
 3. **Sort control** — Recently used / Oldest / Name, within each section.
 4. **Smarter stale signals** — relative age on every card; stale (7+ days) flagged in place.
-5. **Promote selection → Chrome tab group** — turn a multi-select into a real tab group.
+5. ~~**Promote selection → Chrome tab group**~~ — **removed (2026-06-02).** Off-mission
+   (the grid is for triage/closing; Chrome already groups tabs natively) and the
+   `prompt()` flow was clunky. Multi-select + bulk close are kept.
 
 ## Non-Goals
 

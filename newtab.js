@@ -982,40 +982,6 @@ function updateSelectBar() {
   document.getElementById('selectCount').textContent = `${n} selected`;
 }
 
-// Turn the current selection into a Chrome tab group (one group per window,
-// since a Chrome group can't span windows).
-async function groupSelected() {
-  const ids = [...gridSelection];
-  if (!ids.length) return;
-  const name = window.prompt('Name this group:', 'New group');
-  if (name === null) return; // cancelled
-
-  const byWindow = new Map();
-  for (const id of ids) {
-    const t = gridTabs.find(x => x.id === id);
-    if (!t) continue;
-    if (!byWindow.has(t.windowId)) byWindow.set(t.windowId, []);
-    byWindow.get(t.windowId).push(id);
-  }
-
-  for (const [, winIds] of byWindow) {
-    try {
-      const groupId = await new Promise((res, rej) =>
-        chrome.tabs.group({ tabIds: winIds }, gid => {
-          const err = chrome.runtime.lastError;
-          if (err) rej(err); else res(gid);
-        }));
-      await new Promise(res =>
-        chrome.tabGroups.update(groupId, { title: name || 'New group' }, () => res()));
-    } catch (_) {
-      // Skip tabs that can't be grouped (e.g. restricted) and continue.
-    }
-  }
-
-  gridSelection.clear();
-  updateSelectBar();
-  renderCurrentView();
-}
 // Render the count line (tone-escalating) and triage chips.
 function updateOverviewHeader(tabs, now) {
   const countEl = document.getElementById('ovCount');
@@ -1074,7 +1040,6 @@ document.getElementById('viewToggle').addEventListener('click', e => {
 document.getElementById('selClose').addEventListener('click', () => {
   closeGridTabs([...gridSelection]);
 });
-document.getElementById('selGroup').addEventListener('click', groupSelected);
 document.getElementById('selClear').addEventListener('click', () => {
   gridSelection.clear();
   updateSelectBar();
