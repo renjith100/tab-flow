@@ -18,6 +18,16 @@ Make the **window** the top-level container. Inside each window, list its
 **ungrouped tabs first**, then its **tab groups** — so groups always sit under
 the window they belong to.
 
+## Scope update (2026-06-02)
+
+The grid is now **scoped to the current window only**, matching Cover Flow
+(`renderGridView` queries `{ currentWindow: true }`). In practice there is always
+exactly one window block — a single **"This window · N tabs"** header followed by
+Ungrouped + the window's groups. `buildGridRows` still supports multiple windows
+generically (the pinning / "Other window N" logic and its tests remain), but the
+app only ever feeds it the current window, so those paths aren't exercised in the
+UI. This keeps the view simple and consistent with Cover Flow.
+
 ## Decisions (locked)
 
 | Decision                    | Choice                                                                              |
@@ -30,24 +40,23 @@ the window they belong to.
 
 ## Layout (Window mode — default)
 
+The grid shows the **current window only** (see "Scope update" above), so there is
+one block:
+
 ```text
-═══ This window ═════════════════════════
+═══ This window · 20 tabs ════════════════
   Ungrouped · 12            [Close all]
   Work (tab group) · 5      [Close all]   ● blue
   Research (tab group) · 3  [Close all]   ● green
-═══ Other window 1 ══════════════════════
-  Ungrouped · 8             [Close all]
-  Reading (tab group) · 4   [Close all]   ● red
-═══ Other window 2 ══════════════════════
-  Ungrouped · 6             [Close all]
 ```
 
-- Window header: full-width divider with the window label + that window's total
-  tab count.
-- Per window: **Ungrouped** first (only if the window has ungrouped tabs), then
-  each Chrome tab group in first-seen order.
-- **Current window block is pinned first**; other windows follow in first-seen order.
-- Single window → still one "This window" block.
+- Window header: full-width divider with the "This window" label + the current
+  window's total tab count.
+- **Ungrouped** first (only if the window has ungrouped tabs), then each Chrome
+  tab group in first-seen order. Counts/"Close all" act on the current window only.
+
+(`buildGridRows` itself still supports multiple windows — see Architecture — but
+the app only ever passes the current window, so just this one block renders.)
 
 ## Architecture
 
