@@ -962,6 +962,34 @@ function closeGridTabs(ids) {
   });
 }
 
+// Keep age pills live while the grid sits open (no tab events): update each
+// pill (and stale dim) in place — no full rebuild, so scroll/focus are preserved.
+function refreshAgePills() {
+  if (currentView !== 'grid' || gridAnimating) return;
+  const now = Date.now();
+  const byId = new Map(gridTabs.map(t => [t.id, t]));
+  document.querySelectorAll('.grid-card').forEach(cardEl => {
+    const t = byId.get(Number(cardEl.dataset.tabId));
+    if (!t) return;
+    const stale = isStale(t, now);
+    cardEl.classList.toggle('is-stale', stale);
+    const newPill = makeAgePill({
+      ageLabel:  relativeAge(t.lastAccessed, now),
+      freshness: freshness(t.lastAccessed, now),
+      stale,
+    });
+    const oldPill = cardEl.querySelector('.gc-age-pill');
+    if (oldPill && newPill) oldPill.replaceWith(newPill);
+    else if (oldPill) oldPill.remove();
+    else if (newPill) {
+      const banner = cardEl.querySelector('.grid-card-image');
+      if (banner) banner.appendChild(newPill);
+    }
+  });
+}
+// Tick once a minute (labels are minute-granular); no-ops outside the grid.
+setInterval(refreshAgePills, 60000);
+
 // Render the count line (tone-escalating) and triage chips.
 function updateOverviewHeader(tabs, now) {
   const countEl = document.getElementById('ovCount');
