@@ -132,8 +132,13 @@ a favicon + domain line, a bold **title** (1–2 line clamp), and a quiet
 Chrome **tab groups** first (using existing `GROUP_COLORS`), then **per-window
 "Other tabs"**. Each section header shows a count and a "close section" action.
 
-### Layout
-Full-viewport responsive grid, **4–6 columns** by width. Smooth reflow.
+### Layout — responsive flow
+A true flow grid: cards keep a **fixed ideal width (~260px, the approved
+single-card size)** and **never squish**. The number of cards per row grows and
+shrinks with the viewport width — e.g. `grid-template-columns:
+repeat(auto-fill, minmax(260px, 1fr))`. Wide window → 5–6 across; narrow it and
+cards reflow down to 4, 3, 2 while holding their shape. Sections stack
+vertically; the flow runs within each section.
 
 ### Interactions
 - Click card → switch to that tab. Click × → close (with undo).
