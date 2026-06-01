@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "TabFlow",
   "description": "Cover Flow tab switcher — find any tab at a glance",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "homepage_url": "https://github.com/renjith100/tab-flow",
   "action": {
     "default_title": "TabFlow",

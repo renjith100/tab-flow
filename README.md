@@ -2,8 +2,8 @@
 
 # TabFlow
 
-A beautiful Cover Flow-style 3D tab switcher for Chrome
-Navigate, search, group, and close tabs visually — keyboard-first, no screenshots, full-page carousel.
+A beautiful, full-page tab manager for Chrome
+See every tab at a glance, decide what to close, and clear the clutter — a visual Overview grid plus the classic Cover Flow carousel. Keyboard-first, no screenshots.
 
 [![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Install-blue?logo=google-chrome&style=for-the-badge)](https://chromewebstore.google.com/detail/tabflow/lekecebmffemmgemgpmplpekbahbghno)
 
@@ -17,14 +17,28 @@ Watch the demo:
 
 ## Features
 
-- 3D Cover Flow carousel — full-page, animated tab overview
-- Keyboard-first navigation — arrow keys, search (/), Enter to switch, Esc to close
-- Tab Groups — shown as stacked cards with floating favicons; ↓/↑ to drill in/out
-- Drag to close — swipe card sideways + poof animation
-- Undo close — ⌘Z restores recently closed tabs
-- Live search — filter by title or domain, scoped to current group
-- Centered active tab — opens with your current tab in focus
-- Favicon cards — clean look using Google's favicon service
+**Two views, one keystroke apart** — switch anytime; your choice is remembered.
+
+### Overview grid (new default)
+
+- Every tab across all windows as cards, grouped into sections
+- Group ungrouped tabs by **window** or **domain**; sort by **recent / oldest / name**
+- **Relative-age pill** on each card, color-coded fresh → stale; **audio bar** on tabs playing sound
+- **Triage chips** — close all stale (7+ days untouched) or merge duplicates in one click
+- **Multi-select** → bulk close, or promote a selection into a real Chrome tab group
+- Live **tab-count badge** on the toolbar icon, color-escalating as tabs pile up
+
+### Cover Flow carousel
+
+- 3D, full-page animated tab switcher
+- Tab Groups as stacked cards with floating favicons; ↓/↑ to drill in/out
+- Drag to close with a poof animation
+
+**Everywhere**
+
+- Keyboard-first — arrows, search (`/`), Enter to switch, Esc/Del to close
+- Undo (⌘Z) restores recently closed tabs, including bulk closes
+- No data leaves your machine
 
 ## Installation
 
@@ -63,7 +77,7 @@ No data collected or sent anywhere. See [PRIVACY.md](PRIVACY.md).
 
 Early stage — welcome issues, feature requests, PRs!
 
-Ideas: dark mode, thumbnail previews (if permissions allow), sort options, better animations.
+Ideas: opt-in rich previews (OG image + description), saved tab stashes, more triage signals.
 
 ## License
 

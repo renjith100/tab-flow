@@ -196,23 +196,7 @@ function buildCards() {
 
       if (t.audible) {
         card.classList.add('is-audible');
-        const audioWrapper = document.createElement('div');
-        audioWrapper.className = 'audio-intensity-wrapper';
-        const audioBar = document.createElement('div');
-        audioBar.className = 'audio-intensity-bar';
-        // Randomize everything for a truly unique "signature" per tab
-        const pulseDur  = (0.7 + Math.random() * 0.9).toFixed(2); // 0.7s - 1.6s
-        const shiftDur  = (2.0 + Math.random() * 3.0).toFixed(2); // 2.0s - 5.0s
-        const animDelay = (Math.random() * -5.0).toFixed(2);      // deep phase offset
-        const pulseSc   = (0.7 + Math.random() * 0.3).toFixed(2); // 0.7 - 1.0 peak width
-
-        audioBar.style.setProperty('--pulse-dur',   `${pulseDur}s`);
-        audioBar.style.setProperty('--shift-dur',   `${shiftDur}s`);
-        audioBar.style.setProperty('--anim-delay',  `${animDelay}s`);
-        audioBar.style.setProperty('--pulse-scale', pulseSc);
-        
-        audioWrapper.appendChild(audioBar);
-        card.appendChild(audioWrapper);
+        card.appendChild(makeAudioBar()); // shared with the grid — defined in grid.js
       }
 
       const titleEl = document.createElement('div');

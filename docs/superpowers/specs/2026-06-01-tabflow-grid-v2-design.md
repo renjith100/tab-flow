@@ -67,6 +67,9 @@ relativeAge(t.lastAccessed, now)` (in addition to existing fields incl. `stale`)
   (bright green → near-black with age). When the card is stale the pill turns red
   and shows `> {ageLabel}`. The card keeps its `.is-stale` dim; there is no
   separate `.gc-stale` badge.
+- Audible tabs show the same **random moving intensity bar** as Cover Flow
+  (`makeAudioBar` reuses `.audio-intensity-wrapper`/`.audio-intensity-bar` at the
+  card bottom, with randomized pulse/shift timing per tab).
 
 ### `newtab.js` — controls, persistence, promote
 
