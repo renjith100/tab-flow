@@ -158,3 +158,23 @@ test('toCard handles null lastAccessed (unknown) as not-stale, no age', () => {
   assert.strictEqual(card.ageLabel, '');
   assert.strictEqual(card.freshness, 0);
 });
+
+test('buildGridSections labels multiple windows distinctly (marks current)', () => {
+  const now = 100 * T.STALE_MS;
+  const tabs = [
+    { id: 1, windowId: 10, groupId: -1, title: 'A', domain: 'a.com', url: 'https://a.com', favIconUrl: '', audible: false, lastAccessed: now },
+    { id: 2, windowId: 11, groupId: -1, title: 'B', domain: 'b.com', url: 'https://b.com', favIconUrl: '', audible: false, lastAccessed: now },
+  ];
+  const secs = T.buildGridSections(tabs, [], now, { currentWindowId: 11 });
+  assert.strictEqual(secs[0].label, 'Window 1');
+  assert.strictEqual(secs[1].label, 'Window 2 (current)');
+});
+
+test('buildGridSections keeps "Other tabs" for a single window', () => {
+  const now = 100 * T.STALE_MS;
+  const tabs = [
+    { id: 1, windowId: 10, groupId: -1, title: 'A', domain: 'a.com', url: 'https://a.com', favIconUrl: '', audible: false, lastAccessed: now },
+  ];
+  const secs = T.buildGridSections(tabs, [], now, { currentWindowId: 10 });
+  assert.strictEqual(secs[0].label, 'Other tabs');
+});
