@@ -540,6 +540,37 @@ toastUndo.addEventListener('click', undoClose);
 document.addEventListener('keydown', e => {
   const inSearch = document.activeElement === searchEl;
 
+  // ── Grid-mode keyboard ──
+  if (currentView === 'grid') {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); undoClose(); return; }
+    const cards = [...document.querySelectorAll('.grid-card')];
+    if (!cards.length) return;
+    let idx = cards.findIndex(c => c.classList.contains('kb-focus'));
+    const cols = gridColumnCount();
+
+    switch (e.key) {
+      case 'ArrowRight': idx = Math.min(cards.length - 1, (idx < 0 ? 0 : idx + 1)); break;
+      case 'ArrowLeft':  idx = Math.max(0, (idx < 0 ? 0 : idx - 1)); break;
+      case 'ArrowDown':  idx = Math.min(cards.length - 1, (idx < 0 ? 0 : idx + cols)); break;
+      case 'ArrowUp':    idx = Math.max(0, (idx < 0 ? 0 : idx - cols)); break;
+      case 'Enter': if (idx >= 0) cards[idx].click(); return;
+      case 'Backspace':
+      case 'Delete':
+        if (idx >= 0) {
+          e.preventDefault();
+          const id = Number(cards[idx].dataset.tabId);
+          closeGridTab(id);
+        }
+        return;
+      default: return; // let other keys (typing) pass through
+    }
+    e.preventDefault();
+    cards.forEach(c => c.classList.remove('kb-focus'));
+    cards[idx].classList.add('kb-focus');
+    cards[idx].scrollIntoView({ block: 'nearest' });
+    return;
+  }
+
   if (inSearch) {
     if (e.key === 'Enter')           { searchEl.blur(); openTab(); return; }
     else if (e.key === 'ArrowLeft')  { e.preventDefault(); searchEl.blur(); go(-1); return; }
@@ -796,6 +827,14 @@ async function renderGridView() {
 
   renderGrid(document.getElementById('gridScroll'), sections, ctx);
   updateOverviewHeader(gridTabs, now); // implemented in Task 5
+}
+
+// Number of columns currently rendered in a flow (for up/down navigation).
+function gridColumnCount() {
+  const flow = document.querySelector('.grid-flow');
+  if (!flow) return 1;
+  const styles = getComputedStyle(flow);
+  return styles.gridTemplateColumns.split(' ').length;
 }
 
 // Activate a tab (and focus its window) from the grid.

@@ -711,3 +711,9 @@ html[data-view="coverflow"] .grid-scroll { display: none; }
 .sb-close { background: rgba(239,68,68,.16); border: 1px solid rgba(239,68,68,.4); color: #fca5a5; }
 .sb-clear { background: transparent; border: 1px solid rgba(255,255,255,.12); color: var(--text-dim); }
 html[data-view="coverflow"] .select-bar { display: none !important; }
+
+/* ── GRID KEYBOARD FOCUS ── */
+.grid-card.kb-focus {
+  border-color: var(--violet);
+  box-shadow: 0 0 0 2px var(--violet-mid), 0 0 24px rgba(139,92,246,.3);
+}
