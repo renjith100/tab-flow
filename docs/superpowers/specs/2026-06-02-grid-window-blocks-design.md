@@ -18,16 +18,6 @@ Make the **window** the top-level container. Inside each window, list its
 **ungrouped tabs first**, then its **tab groups** — so groups always sit under
 the window they belong to.
 
-## Scope update (2026-06-02)
-
-The grid is now **scoped to the current window only**, matching Cover Flow
-(`renderGridView` queries `{ currentWindow: true }`). In practice there is always
-exactly one window block — a single **"This window · N tabs"** header followed by
-Ungrouped + the window's groups. `buildGridRows` still supports multiple windows
-generically (the pinning / "Other window N" logic and its tests remain), but the
-app only ever feeds it the current window, so those paths aren't exercised in the
-UI. This keeps the view simple and consistent with Cover Flow.
-
 ## Decisions (locked)
 
 | Decision                    | Choice                                                                              |
