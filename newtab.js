@@ -362,8 +362,8 @@ function openTab() {
 
   // Brief flash, then switch — feels intentional rather than instant
   setTimeout(() => {
-    chrome.tabs.update(tab.id, { active: true });
-    chrome.windows.update(tab.windowId, { focused: true });
+    Promise.resolve(chrome.tabs.update(tab.id, { active: true })).catch(() => {});
+    Promise.resolve(chrome.windows.update(tab.windowId, { focused: true })).catch(() => {});
   }, 160);
 }
 
@@ -473,7 +473,7 @@ function closeActiveTab() {
     const cardEl = cardEls[currentIdx];
 
     removeTabFromModels(item, currentIdx);
-    chrome.tabs.remove(item.id);
+    Promise.resolve(chrome.tabs.remove(item.id)).catch(() => {});
     showUndoToast(item.title);
 
     if (exitGroupIfEmpty(item.id)) return;
@@ -804,7 +804,7 @@ function poofClose(idx, card, dx, dy) {
     removeTabFromModels(tab, currentIdx);
 
     // Actually close the Chrome tab
-    chrome.tabs.remove(tab.id);
+    Promise.resolve(chrome.tabs.remove(tab.id)).catch(() => {});
     showUndoToast(tab.title);
 
     if (exitGroupIfEmpty(tab.id)) return;
@@ -901,8 +901,9 @@ function gridColumnCount() {
 // Activate a tab (and focus its window) from the grid.
 function focusTab(tabId) {
   const tab = gridTabs.find(t => t.id === tabId);
-  chrome.tabs.update(tabId, { active: true });
-  if (tab) chrome.windows.update(tab.windowId, { focused: true });
+  // Tab may already be gone (stale card) — swallow the resulting rejection.
+  Promise.resolve(chrome.tabs.update(tabId, { active: true })).catch(() => renderCurrentView());
+  if (tab) Promise.resolve(chrome.windows.update(tab.windowId, { focused: true })).catch(() => {});
 }
 
 // Remember how many tabs the last grid close removed, so undo can restore them.
@@ -914,6 +915,7 @@ function closeGridTab(tabId) {
   const remove = () => {
     lastGridClosedCount = 1;
     chrome.tabs.remove(tabId, () => {
+      void chrome.runtime.lastError; // ignore "no tab" if already gone
       gridSelection.delete(tabId);
       showUndoToast('Closed 1 tab');
     });
@@ -970,6 +972,7 @@ function closeGridTabs(ids) {
   if (!ids.length) return;
   lastGridClosedCount = ids.length;
   chrome.tabs.remove(ids, () => {
+    void chrome.runtime.lastError; // ignore "no tab" if any already gone
     ids.forEach(id => gridSelection.delete(id));
     showUndoToast(`Closed ${ids.length} tabs`);
   });
