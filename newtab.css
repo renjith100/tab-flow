@@ -797,3 +797,22 @@ html[data-view="coverflow"] .select-bar { display: none !important; }
   opacity: 0;
   transition: transform .18s cubic-bezier(0.4, 0, 1, 1), opacity .18s ease;
 }
+
+/* ── GRID WINDOW HEADER (top-tier divider) ── */
+.gs-window-header {
+  display: flex; align-items: baseline; gap: 10px;
+  margin: 30px 0 6px; padding-bottom: 8px;
+  border-bottom: 1px solid rgba(139, 92, 246, .22);
+}
+.gs-window-header:first-child { margin-top: 6px; }
+.gsw-label {
+  font-family: 'Fraunces', serif; font-style: italic; font-size: 18px;
+  color: var(--text);
+}
+.gs-window-header.is-current .gsw-label { color: var(--violet); }
+.gsw-count {
+  font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--text-dim);
+}
+/* sections sit visually inside their window block */
+.grid-section { padding-left: 10px; }
