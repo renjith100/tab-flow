@@ -61,18 +61,19 @@ function makeAgePill(card) {
   return pill;
 }
 
-// "Playing audio" indicator — the same random moving intensity bar as Cover Flow
-// (reuses .audio-intensity-wrapper/.audio-intensity-bar + keyframes).
+// "Playing audio" indicator — the random moving intensity bar.
+// Single shared implementation used by BOTH the grid and Cover Flow (newtab.js).
+// Reuses .audio-intensity-wrapper/.audio-intensity-bar + keyframes; randomizes
+// timing so each tab gets a unique "signature".
 function makeAudioBar() {
   const wrapper = document.createElement('div');
   wrapper.className = 'audio-intensity-wrapper';
   const bar = document.createElement('div');
   bar.className = 'audio-intensity-bar';
-  // Randomize timing so each tab gets a unique "signature" (matches Cover Flow).
-  bar.style.setProperty('--pulse-dur',  `${(0.7 + Math.random() * 0.9).toFixed(2)}s`);
-  bar.style.setProperty('--shift-dur',  `${(2.0 + Math.random() * 3.0).toFixed(2)}s`);
-  bar.style.setProperty('--anim-delay', `${(Math.random() * -5.0).toFixed(2)}s`);
-  bar.style.setProperty('--pulse-scale', (0.7 + Math.random() * 0.3).toFixed(2));
+  bar.style.setProperty('--pulse-dur',   `${(0.7 + Math.random() * 0.9).toFixed(2)}s`); // 0.7s–1.6s
+  bar.style.setProperty('--shift-dur',   `${(2.0 + Math.random() * 3.0).toFixed(2)}s`); // 2.0s–5.0s
+  bar.style.setProperty('--anim-delay',  `${(Math.random() * -5.0).toFixed(2)}s`);      // phase offset
+  bar.style.setProperty('--pulse-scale', (0.7 + Math.random() * 0.3).toFixed(2));        // 0.7–1.0 peak
   wrapper.appendChild(bar);
   return wrapper;
 }
