@@ -7,7 +7,7 @@
 
 ## Problem
 
-Grid v1 made every tab visible and closable. To make it genuinely *useful* for
+Grid v1 made every tab visible and closable. To make it genuinely _useful_ for
 keeping tab count down, users need help **deciding what to close**, **organizing
 fast**, and **not re-accumulating**. Four enhancements address this — all within
 TabFlow's existing permissions (`tabs`, `tabGroups`, `windows`, `sessions`; the
@@ -27,17 +27,17 @@ TabFlow's existing permissions (`tabs`, `tabGroups`, `windows`, `sessions`; the
 - A settings/options page (controls live inline; preferences in `localStorage`).
 - "Never visited" detection (Chrome's API can't distinguish it reliably).
 - Stale "review lane" that moves tabs out of sections (chose flag-in-place instead).
-- Cross-window *merge* into a single group (we create a same-named group per window).
+- Cross-window _merge_ into a single group (we create a same-named group per window).
 
 ## Decisions (locked)
 
-| Decision | Choice |
-|---|---|
-| Domain grouping | Chrome groups stay as sections; only ungrouped tabs cluster by domain |
-| Promote action | Create a Chrome tab group (named via prompt, Chrome default color) |
-| Never-visited | Dropped; use relative age + flag-in-place |
-| Stale display | Flagged in place (dimmed + red ⏳-age badge), not a separate lane |
-| Defaults | group = By window, sort = Recently used, badge always on, age always shown |
+| Decision        | Choice                                                                     |
+| --------------- | -------------------------------------------------------------------------- |
+| Domain grouping | Chrome groups stay as sections; only ungrouped tabs cluster by domain      |
+| Promote action  | Create a Chrome tab group (named via prompt, Chrome default color)         |
+| Never-visited   | Dropped; use relative age + flag-in-place                                  |
+| Stale display   | Flagged in place (dimmed + red ⏳-age badge), not a separate lane          |
+| Defaults        | group = By window, sort = Recently used, badge always on, age always shown |
 
 ## Architecture
 
@@ -48,9 +48,9 @@ Additive, following existing vanilla-JS patterns. No framework, no build step.
 - `relativeAge(lastAccessed, now)` → short label: `"now"` (<60s), `"5m"`, `"3h"`,
   `"2d"`, `"3w"`, `"4mo"`. Returns `""` when `lastAccessed` is missing/0.
 - `sortCards(cards, mode)` → returns a sorted copy. Modes:
-  - `"recent"` — `lastAccessed` descending (newest first).
-  - `"oldest"` — `lastAccessed` ascending.
-  - `"name"` — `title` case-insensitive ascending.
+    - `"recent"` — `lastAccessed` descending (newest first).
+    - `"oldest"` — `lastAccessed` ascending.
+    - `"name"` — `title` case-insensitive ascending.
 - `buildGridSections(tabs, groups, now, opts)` — **extended signature**. `opts`
   defaults to `{ ungroupedBy: 'window', sort: 'recent' }` (old 3-arg calls keep
   v1 behavior). Chrome-grouped tabs always produce group sections first. Ungrouped
@@ -58,7 +58,7 @@ Additive, following existing vanilla-JS patterns. No framework, no build step.
   sections (`ungroupedBy:'domain'`, label = domain). Every section's `cards` are
   passed through `sortCards(..., opts.sort)`.
 - `toCard(t, now)` — **extended** to carry `lastAccessed` and `ageLabel =
-  relativeAge(t.lastAccessed, now)` (in addition to existing fields incl. `stale`).
+relativeAge(t.lastAccessed, now)` (in addition to existing fields incl. `stale`).
 
 ### `grid.js` — display only
 
@@ -71,16 +71,16 @@ Additive, following existing vanilla-JS patterns. No framework, no build step.
 ### `newtab.js` — controls, persistence, promote
 
 - Two control widgets in the overview header (right side, next to chips):
-  - **Group:** segmented `Window | Domain`. Persisted as `tabflow:groupBy`.
-  - **Sort:** `Recent | Oldest | Name`. Persisted as `tabflow:sort`.
-  - Changing either re-renders the grid (`renderGridView`), which reads the two
-    persisted values and passes them as `opts` to `buildGridSections`.
+    - **Group:** segmented `Window | Domain`. Persisted as `tabflow:groupBy`.
+    - **Sort:** `Recent | Oldest | Name`. Persisted as `tabflow:sort`.
+    - Changing either re-renders the grid (`renderGridView`), which reads the two
+      persisted values and passes them as `opts` to `buildGridSections`.
 - `groupSelected()` wired to a new **"Group these"** button in the selection bar:
-  - Prompt for a name (`window.prompt`, default `"New group"`); cancel = abort.
-  - Group selected tab IDs **per window**: for each window that has selected
-    tabs, `chrome.tabs.group({ tabIds })` then `chrome.tabGroups.update(groupId,
-    { title })`. (A Chrome group can't span windows.)
-  - Clear selection; live-sync re-renders.
+    - Prompt for a name (`window.prompt`, default `"New group"`); cancel = abort.
+    - Group selected tab IDs **per window**: for each window that has selected
+      tabs, `chrome.tabs.group({ tabIds })` then `chrome.tabGroups.update(groupId,
+{ title })`. (A Chrome group can't span windows.)
+    - Clear selection; live-sync re-renders.
 
 ### `background.js` — toolbar badge (independent)
 
@@ -93,7 +93,7 @@ Additive, following existing vanilla-JS patterns. No framework, no build step.
 
 ## Data Flow
 
-```
+```text
 background.js: tab events ──> updateBadge() ──> chrome.action.setBadgeText/Color
 
 newtab.js renderGridView():
