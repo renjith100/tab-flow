@@ -740,3 +740,7 @@ html[data-view="coverflow"] .select-bar { display: none !important; }
   border-color: var(--violet);
   box-shadow: 0 0 0 2px var(--violet-mid), 0 0 24px rgba(139,92,246,.3);
 }
+
+/* ── CARD RELATIVE AGE ── */
+.gc-age { color: var(--text-dim); }
+.gc-age-stale { color: #fca5a5; }

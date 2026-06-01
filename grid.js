@@ -64,7 +64,15 @@ function buildGridCard(card, ctx) {
 
   const meta = document.createElement('div');
   meta.className = 'gc-meta';
-  meta.textContent = card.domain;
+  const dom = document.createElement('span');
+  dom.textContent = card.domain;
+  meta.appendChild(dom);
+  if (card.ageLabel) {
+    const age = document.createElement('span');
+    age.className = card.stale ? 'gc-age gc-age-stale' : 'gc-age';
+    age.textContent = card.stale ? ` · ⏳ ${card.ageLabel}` : ` · ${card.ageLabel}`;
+    meta.appendChild(age);
+  }
   body.appendChild(meta);
 
   const title = document.createElement('div');
@@ -77,13 +85,6 @@ function buildGridCard(card, ctx) {
     desc.className = 'gc-desc';
     desc.textContent = card.description;
     body.appendChild(desc);
-  }
-
-  if (card.stale) {
-    const badge = document.createElement('div');
-    badge.className = 'gc-stale';
-    badge.textContent = '⏳ stale';
-    body.appendChild(badge);
   }
 
   el.appendChild(body);
