@@ -59,20 +59,19 @@ function buildGridCard(card, ctx) {
   close.addEventListener('click', ev => { ev.stopPropagation(); ctx.onClose(card.id); });
   el.appendChild(close);
 
+  if (card.ageLabel) {
+    const pill = document.createElement('div');
+    pill.className = card.stale ? 'gc-age-pill is-stale-age' : 'gc-age-pill';
+    pill.textContent = card.stale ? `⏳ ${card.ageLabel}` : card.ageLabel;
+    el.appendChild(pill);
+  }
+
   const body = document.createElement('div');
   body.className = 'gc-body';
 
   const meta = document.createElement('div');
   meta.className = 'gc-meta';
-  const dom = document.createElement('span');
-  dom.textContent = card.domain;
-  meta.appendChild(dom);
-  if (card.ageLabel) {
-    const age = document.createElement('span');
-    age.className = card.stale ? 'gc-age gc-age-stale' : 'gc-age';
-    age.textContent = card.stale ? ` · ⏳ ${card.ageLabel}` : ` · ${card.ageLabel}`;
-    meta.appendChild(age);
-  }
+  meta.textContent = card.domain;
   body.appendChild(meta);
 
   const title = document.createElement('div');

@@ -741,9 +741,20 @@ html[data-view="coverflow"] .select-bar { display: none !important; }
   box-shadow: 0 0 0 2px var(--violet-mid), 0 0 24px rgba(139,92,246,.3);
 }
 
-/* ── CARD RELATIVE AGE ── */
-.gc-age { color: var(--text-dim); }
-.gc-age-stale { color: #fca5a5; }
+/* ── CARD RELATIVE-AGE PILL (top-left, over the image) ── */
+.gc-age-pill {
+  position: absolute; top: 8px; left: 8px; z-index: 2;
+  padding: 3px 9px; border-radius: 11px;
+  background: rgba(0, 0, 0, .5); backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, .12);
+  color: rgba(255, 255, 255, .9);
+  font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: .02em; line-height: 1;
+}
+.gc-age-pill.is-stale-age {
+  background: rgba(239, 68, 68, .28); backdrop-filter: blur(4px);
+  border-color: rgba(239, 68, 68, .55); color: #fecaca;
+}
 
 /* ── GROUP-BY / SORT CONTROLS ── */
 .ov-count { margin-right: auto; }   /* push chips + controls to the right */
