@@ -120,8 +120,8 @@ function toCard(t, now) {
 // Chrome groups always become group sections first (in first-seen order).
 // Ungrouped tabs go into per-window sections, or per-domain sections when
 // ungroupedBy==='domain'. A lone window section is labeled "Other tabs"; with
-// multiple windows they're labeled "Window 1/2/…" (the current one marked).
-// Each section's cards are sorted.
+// multiple windows the current one is "This window" and the rest "Other window".
+// The current window's sections are pinned to the top. Each section's cards are sorted.
 function buildGridSections(tabs, groups, now, opts = {}) {
   const ungroupedBy = opts.ungroupedBy || 'window';
   const sort = opts.sort || 'recent';
@@ -139,7 +139,8 @@ function buildGridSections(tabs, groups, now, opts = {}) {
         const g = groupMap.get(t.groupId);
         groupSections.set(t.groupId, {
           id: `group-${g.id}`, kind: 'group',
-          label: g.title || 'Tab Group', color: g.color, cards: [],
+          label: g.title || 'Tab Group', color: g.color,
+          windowId: g.windowId, cards: [],
         });
       }
       groupSections.get(t.groupId).cards.push(card);
@@ -163,19 +164,33 @@ function buildGridSections(tabs, groups, now, opts = {}) {
     }
   }
 
-  // Disambiguate multiple windows: "Other tabs" → "Window 1/2/…" (mark current).
+  // Label window sections. One window → "Other tabs". Multiple → the current
+  // window is "This window"; the rest are "Other window" (numbered if 2+).
   const winSecs = [...otherSections.values()].filter(s => s.kind === 'window');
   if (winSecs.length > 1) {
-    winSecs.forEach((s, i) => {
-      s.label = `Window ${i + 1}`;
-      if (currentWindowId != null && s.windowId === currentWindowId) {
-        s.label += ' (current)';
-      }
-    });
+    if (currentWindowId == null) {
+      winSecs.forEach((s, i) => { s.label = `Window ${i + 1}`; });
+    } else {
+      const otherCount = winSecs.filter(s => s.windowId !== currentWindowId).length;
+      let oi = 0;
+      winSecs.forEach(s => {
+        if (s.windowId === currentWindowId) {
+          s.label = 'This window';
+        } else {
+          oi += 1;
+          s.label = otherCount > 1 ? `Other window ${oi}` : 'Other window';
+        }
+      });
+    }
   }
 
-  const sections = [...groupSections.values(), ...otherSections.values()];
-  return sections.map(s => ({
+  // Pin the current window's sections (its groups + ungrouped) to the top.
+  const all = [...groupSections.values(), ...otherSections.values()];
+  const ordered = currentWindowId == null ? all : [
+    ...all.filter(s => s.windowId === currentWindowId),
+    ...all.filter(s => s.windowId !== currentWindowId),
+  ];
+  return ordered.map(s => ({
     ...s, cards: sortCards(s.cards, sort), count: s.cards.length,
   }));
 }

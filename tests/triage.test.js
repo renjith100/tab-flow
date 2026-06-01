@@ -159,15 +159,40 @@ test('toCard handles null lastAccessed (unknown) as not-stale, no age', () => {
   assert.strictEqual(card.freshness, 0);
 });
 
-test('buildGridSections labels multiple windows distinctly (marks current)', () => {
+test('buildGridSections pins current window first, labels This/Other window', () => {
   const now = 100 * T.STALE_MS;
   const tabs = [
     { id: 1, windowId: 10, groupId: -1, title: 'A', domain: 'a.com', url: 'https://a.com', favIconUrl: '', audible: false, lastAccessed: now },
     { id: 2, windowId: 11, groupId: -1, title: 'B', domain: 'b.com', url: 'https://b.com', favIconUrl: '', audible: false, lastAccessed: now },
   ];
   const secs = T.buildGridSections(tabs, [], now, { currentWindowId: 11 });
-  assert.strictEqual(secs[0].label, 'Window 1');
-  assert.strictEqual(secs[1].label, 'Window 2 (current)');
+  assert.strictEqual(secs[0].windowId, 11);          // current pinned to top
+  assert.strictEqual(secs[0].label, 'This window');
+  assert.strictEqual(secs[1].label, 'Other window');
+});
+
+test('buildGridSections numbers multiple other windows', () => {
+  const now = 100 * T.STALE_MS;
+  const tabs = [
+    { id: 1, windowId: 10, groupId: -1, title: 'A', domain: 'a.com', url: 'https://a.com', favIconUrl: '', audible: false, lastAccessed: now },
+    { id: 2, windowId: 11, groupId: -1, title: 'B', domain: 'b.com', url: 'https://b.com', favIconUrl: '', audible: false, lastAccessed: now },
+    { id: 3, windowId: 12, groupId: -1, title: 'C', domain: 'c.com', url: 'https://c.com', favIconUrl: '', audible: false, lastAccessed: now },
+  ];
+  const secs = T.buildGridSections(tabs, [], now, { currentWindowId: 12 });
+  assert.strictEqual(secs[0].label, 'This window');                 // win 12 pinned
+  assert.deepStrictEqual([secs[1].label, secs[2].label], ['Other window 1', 'Other window 2']);
+});
+
+test('buildGridSections pins current window above other-window groups', () => {
+  const now = 100 * T.STALE_MS;
+  const tabs = [
+    { id: 1, windowId: 10, groupId: 5,  title: 'G', domain: 'a.com', url: 'https://a.com', favIconUrl: '', audible: false, lastAccessed: now },
+    { id: 2, windowId: 11, groupId: -1, title: 'B', domain: 'b.com', url: 'https://b.com', favIconUrl: '', audible: false, lastAccessed: now },
+  ];
+  const groups = [{ id: 5, title: 'Work', color: 'blue', windowId: 10 }];
+  const secs = T.buildGridSections(tabs, groups, now, { currentWindowId: 11 });
+  assert.strictEqual(secs[0].windowId, 11);   // current window's section first
+  assert.strictEqual(secs[1].kind, 'group');  // other window's group after
 });
 
 test('buildGridSections keeps "Other tabs" for a single window', () => {
