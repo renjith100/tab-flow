@@ -803,7 +803,44 @@ function toggleGridSelect(id) {
   if (gridSelection.has(id)) gridSelection.delete(id); else gridSelection.add(id);
   renderCurrentView();
 }
-function updateOverviewHeader() { /* implemented in Task 5 */ }
+// Render the count line (tone-escalating) and triage chips.
+function updateOverviewHeader(tabs, now) {
+  const countEl = document.getElementById('ovCount');
+  const chipsEl = document.getElementById('ovChips');
+  const n = tabs.length;
+
+  countEl.textContent = `${n} ${n === 1 ? 'tab' : 'tabs'} open`;
+  countEl.classList.remove('tone-warn', 'tone-alert');
+  const tone = countTone(n);
+  if (tone === 'warn')  countEl.classList.add('tone-warn');
+  if (tone === 'alert') countEl.classList.add('tone-alert');
+
+  chipsEl.innerHTML = '';
+
+  const stale = staleTabs(tabs, now);
+  if (stale.length) {
+    chipsEl.appendChild(makeChip(
+      `${stale.length} stale · Close all`, 'chip-danger',
+      () => closeGridTabs(stale.map(t => t.id))));
+  }
+
+  const dups = duplicateGroups(tabs);
+  if (dups.length) {
+    // Merge = close every duplicate except the keeper (first) in each group.
+    const toClose = dups.flatMap(g => g.tabs.slice(1).map(t => t.id));
+    chipsEl.appendChild(makeChip(
+      `${dups.length} duplicates · Merge`, 'chip-warn',
+      () => closeGridTabs(toClose)));
+  }
+}
+
+function makeChip(label, cls, onClick) {
+  const b = document.createElement('button');
+  b.className = `ov-chip ${cls}`;
+  b.textContent = label;
+  b.addEventListener('click', onClick);
+  return b;
+}
 
 // Dispatch rendering to the active view. Grid loads all windows; Cover Flow
 // keeps its current-window behavior in buildCards()/updatePositions().
