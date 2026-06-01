@@ -821,7 +821,7 @@ document.addEventListener('touchend',  endDrag);
 // Selection state for multi-select (Task 6 wires bulk actions to it).
 let gridSelection = new Set();
 
-// Loaded tab list backing the grid (all windows).
+// Loaded tab list backing the grid (current window only).
 let gridTabs = [];
 
 // True while a grid close animation is running — defers the live-sync rebuild.
@@ -852,7 +852,7 @@ async function renderGridView() {
 
   const now = Date.now();
 
-  // Apply the search query to the cards shown (count + chips still cover all tabs).
+  // Filter the cards shown; count + chips still reflect all the current window's tabs.
   const q = searchEl.value.toLowerCase().trim();
   const shown = q
     ? gridTabs.filter(t =>
@@ -1055,7 +1055,7 @@ function makeChip(label, cls, onClick) {
   return b;
 }
 
-// Dispatch rendering to the active view. Grid loads all windows; Cover Flow
+// Dispatch rendering to the active view. Grid loads the current window; Cover Flow
 // keeps its current-window behavior in buildCards()/updatePositions().
 function renderCurrentView() {
   if (currentView === 'grid') {
@@ -1139,7 +1139,7 @@ async function init() {
 
 // ── Live sync: re-fetch and rebuild when tabs change externally ────────────────
 async function reloadTabs() {
-  // In grid mode, just re-render the grid (it re-queries all windows itself).
+  // In grid mode, just re-render the grid (it re-queries the current window itself).
   if (currentView === 'grid') {
     // Don't rebuild mid-animation — it would destroy the cards being animated.
     if (gridAnimating) {
