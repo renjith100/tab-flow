@@ -68,6 +68,16 @@ function relativeAge(lastAccessed, now) {
   return Math.floor(d / 30) + ' mo';
 }
 
+// Freshness 0..1 from a lastAccessed timestamp: 1 = just now, 0 = STALE_MS (7d)
+// or older. Used to color the age pill (bright green → dull green).
+function freshness(lastAccessed, now) {
+  if (!lastAccessed) return 0;
+  const age = now - lastAccessed;
+  if (age <= 0) return 1;
+  if (age >= STALE_MS) return 0;
+  return 1 - age / STALE_MS;
+}
+
 // Return a sorted copy of cards. modes: 'recent' (default), 'oldest', 'name'.
 function sortCards(cards, mode) {
   const copy = [...cards];
@@ -95,6 +105,7 @@ function toCard(t, now) {
     audible:      t.audible,
     lastAccessed: t.lastAccessed,
     ageLabel:     relativeAge(t.lastAccessed, now),
+    freshness:    freshness(t.lastAccessed, now),
     stale:        isStale(t, now),
     image:        undefined,
     description:  undefined,
@@ -156,6 +167,6 @@ function buildGridSections(tabs, groups, now, opts = {}) {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     countTone, STALE_MS, isStale, staleTabs, normalizeUrl, duplicateGroups,
-    buildGridSections, toCard, relativeAge, sortCards,
+    buildGridSections, toCard, relativeAge, sortCards, freshness,
   };
 }

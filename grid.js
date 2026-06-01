@@ -55,6 +55,15 @@ function buildGridCard(card, ctx) {
     const pill = document.createElement('div');
     pill.className = card.stale ? 'gc-age-pill is-stale-age' : 'gc-age-pill';
     pill.textContent = card.stale ? `⏳ ${card.ageLabel}` : card.ageLabel;
+    if (!card.stale) {
+      // Freshness gradient: bright green when just used → dull green by ~7 days.
+      const f = card.freshness;                 // 1 = fresh, 0 = ~7d
+      const sat   = Math.round(35 + 50 * f);    // 35%..85%
+      const light = Math.round(24 + 16 * f);    // 24%..40%
+      pill.style.background = `hsla(145, ${sat}%, ${light}%, .88)`;
+      pill.style.borderColor = `hsla(145, ${sat}%, ${Math.min(light + 20, 72)}%, .65)`;
+      pill.style.color = '#eafff1';
+    }
     banner.appendChild(pill);
   }
   el.appendChild(banner);

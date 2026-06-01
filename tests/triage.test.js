@@ -139,3 +139,12 @@ test('buildGridSections sorts section cards by opts.sort', () => {
   const byName = T.buildGridSections(tabs, [], now, { sort: 'name' });
   assert.deepStrictEqual(byName[0].cards.map(c => c.id), [2, 1]);
 });
+
+test('freshness: 1 when new, 0 at/after 7d, linear between', () => {
+  const now = 100 * T.STALE_MS;
+  assert.strictEqual(T.freshness(0, now), 0);
+  assert.strictEqual(T.freshness(now, now), 1);
+  assert.strictEqual(T.freshness(now - T.STALE_MS, now), 0);
+  assert.strictEqual(T.freshness(now - T.STALE_MS - 5, now), 0);
+  assert.strictEqual(T.freshness(now - T.STALE_MS / 2, now), 0.5);
+});
