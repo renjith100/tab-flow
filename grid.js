@@ -84,7 +84,6 @@ function buildGridCard(card, ctx) {
   el.className = 'grid-card';
   el.dataset.tabId = card.id;
   if (card.stale) el.classList.add('is-stale');
-  if (ctx.isSelected(card.id)) el.classList.add('is-selected');
 
   const banner = buildCardBanner(card);
   const pill = makeAgePill(card);
@@ -122,10 +121,7 @@ function buildGridCard(card, ctx) {
 
   el.appendChild(body);
 
-  el.addEventListener('click', ev => {
-    if (ev.metaKey || ev.ctrlKey) { ctx.onToggleSelect(card.id); return; }
-    ctx.onOpen(card.id);
-  });
+  el.addEventListener('click', () => ctx.onOpen(card.id));
 
   return el;
 }

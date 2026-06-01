@@ -16,14 +16,14 @@ Paste these into the Developer Dashboard. Nothing here ships in the extension; i
 
 **TabFlow turns your tab chaos into something you can actually act on.**
 
-Open it and every tab — across every window — shows up as a card you can scan, search, and close in one click. When you just want to flip between tabs, switch to the classic 3D Cover Flow carousel. Keyboard-first, fully local, no screenshots of your pages.
+Open it and every tab in your current window shows up as a card you can scan, search, and close in one click. When you just want to flip between tabs, switch to the classic 3D Cover Flow carousel. Keyboard-first, fully local, no screenshots of your pages.
 
 **Overview grid (the new default)**
-• Every tab as a card, grouped into sections — by your Chrome tab groups, then by window or domain
+• Every tab as a card, grouped into sections — your Chrome tab groups, with loose tabs first
 • Sort by most-recent, oldest, or name
 • A relative-age pill on each card (bright green when fresh, fading to red when a tab's been untouched 7+ days) so you can see what's safe to close
 • One-click triage: "Close all stale" and "Merge duplicates"
-• Multi-select to bulk-close a batch of tabs in one go
+• Close any tab with one click — or clear a whole group/section at once
 • A live tab-count badge on the toolbar icon that turns amber, then red, as tabs pile up — a gentle nudge to clean up
 • Tabs playing audio show an animated sound bar, so you can find (or avoid) them
 
@@ -43,7 +43,7 @@ Default shortcut: ⌘⇧. (Mac) / Ctrl+Shift+. (Windows/Linux) — change it at 
 ## What's new in 2.0.0
 
 • NEW: Overview grid — see and triage every tab at once (now the default view)
-• NEW: Group by window/domain + sort by recent/oldest/name
+• NEW: Group by tab group or domain + sort by recent/oldest/name
 • NEW: Stale & duplicate detection with one-click bulk close, and relative-age pills
 • NEW: Live tab-count badge on the toolbar icon
 • NEW: Audio indicator now appears in the grid too
@@ -56,7 +56,7 @@ Default shortcut: ⌘⇧. (Mac) / Ctrl+Shift+. (Windows/Linux) — change it at 
 
 1. Overview grid full — count + triage chips + several sections of cards
 2. Group-by Domain + the sort control, with age pills visible
-3. Multi-select active → "Close selected" bar
+3. Triage chips in action ("N stale · Close all" / "N duplicates · Merge") or a section's "Close all"
 4. A card mid-close (poof) or the toolbar count badge in the chrome
 5. Cover Flow carousel (keep one, so existing users recognize it)
 

@@ -1,7 +1,10 @@
 # TabFlow Overview Grid — Design
 
 **Date:** 2026-06-01
-**Status:** Approved design, pending spec review
+**Status:** Implemented. **Update 2026-06-02:** the grid is now **current-window
+only**, and **multi-select** (and promote-to-group) were **removed** — close
+actions are per-card ×, section "Close all", and the stale/duplicate chips. OG
+rich cards remain deferred (opt-in). References to those below are historical.
 **Author:** Renjith (with Claude)
 
 ## Problem
