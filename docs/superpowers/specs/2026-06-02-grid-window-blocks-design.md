@@ -20,17 +20,17 @@ the window they belong to.
 
 ## Decisions (locked)
 
-| Decision | Choice |
-|---|---|
-| Ungrouped section label | "Ungrouped" |
-| Window header when 1 window | Always shown (consistent) |
-| Window names | Current = "This window"; others = "Other window" (one) / "Other window 1/2…" (many) |
-| Tab-group label | "Name (tab group)" + color dot |
-| Group-by **Domain** mode | Stays **flat** (no window headers; cross-window by design) |
+| Decision                    | Choice                                                                              |
+| --------------------------- | ----------------------------------------------------------------------------------- |
+| Ungrouped section label     | "Ungrouped"                                                                         |
+| Window header when 1 window | Always shown (consistent)                                                           |
+| Window names                | Current = "This window"; others = "Other window" (one) / "Other window 1/2…" (many) |
+| Tab-group label             | "Name (tab group)" + color dot                                                      |
+| Group-by **Domain** mode    | Stays **flat** (no window headers; cross-window by design)                          |
 
 ## Layout (Window mode — default)
 
-```
+```text
 ═══ This window ═════════════════════════
   Ungrouped · 12            [Close all]
   Work (tab group) · 5      [Close all]   ● blue
@@ -60,6 +60,7 @@ changes from a flat section list to an ordered list of **rows**). A row is one o
 `buildGridRows(tabs, groups, now, opts)` — `opts = { ungroupedBy, sort, currentWindowId }`.
 
 **Window mode (`ungroupedBy:'window'`, default):**
+
 1. Bucket tabs by window. For each window record its ungrouped tabs and its
    groups (first-seen order), and a total tab count.
 2. Order windows: current first, then others in first-seen order.
@@ -76,6 +77,7 @@ emit `group` section rows (now also labeled "(tab group)") followed by per-domai
 Every section row's `cards` are sorted via `sortCards(cards, opts.sort)`.
 
 `grid.js`:
+
 - **`renderGrid(container, rows, ctx)`** iterates rows. A `window-header` row →
   `buildWindowHeader(row)` (a `.gs-window-header` divider with label + count).
   A section row → existing `buildSectionEl` (unchanged; it already renders the
