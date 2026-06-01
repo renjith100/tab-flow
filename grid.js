@@ -61,6 +61,20 @@ function makeAgePill(card) {
   return pill;
 }
 
+// "Playing audio" indicator — a pulsing speaker badge on the card image.
+function makeAudioBadge() {
+  const b = document.createElement('div');
+  b.className = 'gc-audio';
+  b.title = 'Playing audio';
+  b.innerHTML =
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" ' +
+    'stroke="currentColor" stroke-width="2" stroke-linejoin="round">' +
+    '<path d="M4 9v6h4l5 4V5L8 9H4z"/>' +
+    '<path d="M17 8.5a5 5 0 0 1 0 7" fill="none" stroke-linecap="round"/>' +
+    '</svg>';
+  return b;
+}
+
 // One tab card.
 function buildGridCard(card, ctx) {
   const el = document.createElement('article');
@@ -72,6 +86,7 @@ function buildGridCard(card, ctx) {
   const banner = buildCardBanner(card);
   const pill = makeAgePill(card);
   if (pill) banner.appendChild(pill);
+  if (card.audible) banner.appendChild(makeAudioBadge());
   el.appendChild(banner);
 
   const close = document.createElement('button');
