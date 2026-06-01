@@ -1154,6 +1154,10 @@ function scheduleReload() {
 chrome.tabs.onCreated.addListener(tab => {
   if (tab.windowId === currentWindowId) scheduleReload();
 });
+// Switching to a tab updates its lastAccessed → refresh age pills, freshness, and recency sort.
+chrome.tabs.onActivated.addListener(activeInfo => {
+  if (activeInfo.windowId === currentWindowId) scheduleReload();
+});
 chrome.tabs.onRemoved.addListener((_, removeInfo) => {
   if (removeInfo.windowId === currentWindowId) scheduleReload();
 });
