@@ -62,9 +62,11 @@ Additive, following existing vanilla-JS patterns. No framework, no build step.
 
 ### `grid.js` — display only
 
-- Meta line renders `domain · ageLabel` (e.g. `github.com · 3w`). When the card
-  is stale, the age portion uses the red stale color and shows `⏳ {ageLabel}`.
-  (Existing `.is-stale` dim + `.gc-stale` badge remain.)
+- Meta line renders just the **domain**. The relative age is shown as a **pill**
+  overlaid on the image (bottom-left, via `makeAgePill`), color-coded by freshness
+  (bright green → near-black with age). When the card is stale the pill turns red
+  and shows `> {ageLabel}`. The card keeps its `.is-stale` dim; there is no
+  separate `.gc-stale` badge.
 
 ### `newtab.js` — controls, persistence, promote
 
@@ -98,7 +100,7 @@ newtab.js renderGridView():
   read localStorage(tabflow:groupBy, tabflow:sort)
   query all tabs+groups ──> map ──> buildGridSections(tabs, groups, now,
                                        { ungroupedBy, sort })
-  ──> grid.js renderGrid()  (cards show domain · ageLabel)
+  ──> grid.js renderGrid()  (cards show domain + freshness age pill)
 
 selection bar "Group these" ──> groupSelected()
   ──> per-window chrome.tabs.group + tabGroups.update(title)
