@@ -25,7 +25,7 @@ Watch the demo:
 - Group ungrouped tabs by **window** or **domain**; sort by **recent / oldest / name**
 - **Relative-age pill** on each card, color-coded fresh → stale; **audio bar** on tabs playing sound
 - **Triage chips** — close all stale (7+ days untouched) or merge duplicates in one click
-- **Multi-select** → bulk close, or promote a selection into a real Chrome tab group
+- **Multi-select** → bulk-close a batch of tabs in one go
 - Live **tab-count badge** on the toolbar icon, color-escalating as tabs pile up
 
 ### Cover Flow carousel

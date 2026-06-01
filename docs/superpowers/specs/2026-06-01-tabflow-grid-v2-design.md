@@ -1,7 +1,12 @@
 # TabFlow Grid v2 — Triage Enhancements Design
 
-**Date:** 2026-06-01
-**Status:** Approved design, pending spec review
+**Date:** 2026-06-01 (design) · **Updated:** 2026-06-02
+**Status:** Implemented, with one change. **Goal 5 "Promote selection → Chrome tab
+group" was removed on 2026-06-02** (see Goals). This banner is the single source of
+truth: any promote/"Group these"/`groupSelected` references in the sections below
+(Decisions, `newtab.js`, Data Flow, Edge Handling, Testing) are **historical** —
+kept as the original design record. Shipped behavior is **multi-select + bulk
+close only**.
 **Author:** Renjith (with Claude)
 **Builds on:** `2026-06-01-tabflow-overview-grid-design.md` (Grid v1, branch `feat/overview-grid`)
 
