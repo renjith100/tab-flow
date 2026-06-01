@@ -16,10 +16,10 @@ Paste these into the Developer Dashboard. Nothing here ships in the extension; i
 
 **TabFlow turns your tab chaos into something you can actually act on.**
 
-Open it and every tab — across every window — shows up as a card you can scan, search, and close in one click. When you just want to flip between tabs, switch to the classic 3D Cover Flow carousel. Keyboard-first, fully local, no screenshots of your pages.
+Open it and every tab in your current window shows up as a card you can scan, search, and close in one click. When you just want to flip between tabs, switch to the classic 3D Cover Flow carousel. Keyboard-first, fully local, no screenshots of your pages.
 
 **Overview grid (the new default)**
-• Every tab as a card, grouped into sections — by your Chrome tab groups, then by window or domain
+• Every tab as a card, grouped into sections — your Chrome tab groups, with loose tabs first
 • Sort by most-recent, oldest, or name
 • A relative-age pill on each card (bright green when fresh, fading to red when a tab's been untouched 7+ days) so you can see what's safe to close
 • One-click triage: "Close all stale" and "Merge duplicates"
@@ -43,7 +43,7 @@ Default shortcut: ⌘⇧. (Mac) / Ctrl+Shift+. (Windows/Linux) — change it at 
 ## What's new in 2.0.0
 
 • NEW: Overview grid — see and triage every tab at once (now the default view)
-• NEW: Group by window/domain + sort by recent/oldest/name
+• NEW: Group by tab group or domain + sort by recent/oldest/name
 • NEW: Stale & duplicate detection with one-click bulk close, and relative-age pills
 • NEW: Live tab-count badge on the toolbar icon
 • NEW: Audio indicator now appears in the grid too
