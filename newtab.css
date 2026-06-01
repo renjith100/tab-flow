@@ -744,3 +744,26 @@ html[data-view="coverflow"] .select-bar { display: none !important; }
 /* ── CARD RELATIVE AGE ── */
 .gc-age { color: var(--text-dim); }
 .gc-age-stale { color: #fca5a5; }
+
+/* ── GROUP-BY / SORT CONTROLS ── */
+.ov-count { margin-right: auto; }   /* push chips + controls to the right */
+.ov-controls { display: flex; align-items: center; gap: 10px; }
+.ov-group {
+  display: flex; gap: 3px;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.09);
+  border-radius: 10px; padding: 3px;
+}
+.ovg-btn {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600;
+  color: var(--text-dim); background: transparent; border: none;
+  padding: 4px 10px; border-radius: 8px; cursor: pointer; transition: .15s;
+}
+.ovg-btn.is-active { background: var(--violet-soft); color: var(--violet); }
+.ovg-btn:hover:not(.is-active) { color: var(--text); }
+.ov-sort {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600;
+  color: var(--text); background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.09); border-radius: 10px;
+  padding: 5px 8px; cursor: pointer; outline: none;
+}
+.ov-sort option { background: #14121f; color: var(--text); }

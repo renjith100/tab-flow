@@ -815,6 +815,17 @@ let gridSelection = new Set();
 // Loaded tab list backing the grid (all windows).
 let gridTabs = [];
 
+// Grid organization prefs (persisted).
+let gridGroupBy = localStorage.getItem('tabflow:groupBy') || 'window'; // 'window'|'domain'
+let gridSort    = localStorage.getItem('tabflow:sort')    || 'recent'; // 'recent'|'oldest'|'name'
+
+function applyControlState() {
+  document.querySelectorAll('.ovg-btn').forEach(b =>
+    b.classList.toggle('is-active', b.dataset.group === gridGroupBy));
+  const sortSel = document.getElementById('ovSort');
+  if (sortSel) sortSel.value = gridSort;
+}
+
 async function renderGridView() {
   const [chromeTabs, groups] = await Promise.all([
     new Promise(r => chrome.tabs.query({}, r)),
@@ -834,7 +845,9 @@ async function renderGridView() {
     ? gridTabs.filter(t =>
         t.title.toLowerCase().includes(q) || t.domain.toLowerCase().includes(q))
     : gridTabs;
-  const sections = buildGridSections(shown, groups, now);
+  const sections = buildGridSections(shown, groups, now, {
+    ungroupedBy: gridGroupBy, sort: gridSort,
+  });
 
   const ctx = {
     onOpen:         id => focusTab(id),
@@ -845,7 +858,8 @@ async function renderGridView() {
   };
 
   renderGrid(document.getElementById('gridScroll'), sections, ctx);
-  updateOverviewHeader(gridTabs, now); // implemented in Task 5
+  updateOverviewHeader(gridTabs, now);
+  applyControlState();
 }
 
 // Number of columns currently rendered in a flow (for up/down navigation).
@@ -957,6 +971,19 @@ document.getElementById('selClose').addEventListener('click', () => {
 document.getElementById('selClear').addEventListener('click', () => {
   gridSelection.clear();
   updateSelectBar();
+  renderCurrentView();
+});
+
+document.getElementById('ovGroup').addEventListener('click', e => {
+  const btn = e.target.closest('.ovg-btn');
+  if (!btn) return;
+  gridGroupBy = btn.dataset.group;
+  localStorage.setItem('tabflow:groupBy', gridGroupBy);
+  renderCurrentView();
+});
+document.getElementById('ovSort').addEventListener('change', e => {
+  gridSort = e.target.value;
+  localStorage.setItem('tabflow:sort', gridSort);
   renderCurrentView();
 });
 
