@@ -780,12 +780,6 @@ html[data-view="coverflow"] .select-bar { display: none !important; }
 }
 .ov-sort option { background: #14121f; color: var(--text); }
 
-.sb-group {
-  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600;
-  border-radius: 8px; padding: 5px 11px; cursor: pointer;
-  background: var(--violet-soft); border: 1px solid rgba(139,92,246,.4); color: var(--violet);
-}
-.sb-group:hover { background: rgba(139,92,246,.3); }
 
 /* ── COVER FLOW: age pill + hover close on tab cards ── */
 .card:hover .gc-close { opacity: 1; }

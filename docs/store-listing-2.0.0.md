@@ -23,7 +23,7 @@ Open it and every tab — across every window — shows up as a card you can sca
 • Sort by most-recent, oldest, or name
 • A relative-age pill on each card (bright green when fresh, fading to red when a tab's been untouched 7+ days) so you can see what's safe to close
 • One-click triage: "Close all stale" and "Merge duplicates"
-• Multi-select to bulk-close, or turn a selection into a real Chrome tab group
+• Multi-select to bulk-close a batch of tabs in one go
 • A live tab-count badge on the toolbar icon that turns amber, then red, as tabs pile up — a gentle nudge to clean up
 • Tabs playing audio show an animated sound bar, so you can find (or avoid) them
 
@@ -45,7 +45,6 @@ Default shortcut: ⌘⇧. (Mac) / Ctrl+Shift+. (Windows/Linux) — change it at 
 • NEW: Overview grid — see and triage every tab at once (now the default view)
 • NEW: Group by window/domain + sort by recent/oldest/name
 • NEW: Stale & duplicate detection with one-click bulk close, and relative-age pills
-• NEW: Promote a selection into a Chrome tab group
 • NEW: Live tab-count badge on the toolbar icon
 • NEW: Audio indicator now appears in the grid too
 • Cover Flow is preserved — toggle between the two views anytime; your choice is remembered
@@ -57,7 +56,7 @@ Default shortcut: ⌘⇧. (Mac) / Ctrl+Shift+. (Windows/Linux) — change it at 
 
 1. Overview grid full — count + triage chips + several sections of cards
 2. Group-by Domain + the sort control, with age pills visible
-3. Multi-select active → "Group these" / "Close selected" bar
+3. Multi-select active → "Close selected" bar
 4. A card mid-close (poof) or the toolbar count badge in the chrome
 5. Cover Flow carousel (keep one, so existing users recognize it)
 
