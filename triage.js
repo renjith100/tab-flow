@@ -112,61 +112,113 @@ function toCard(t, now) {
   };
 }
 
-// Turn the flat tab list + Chrome groups into ordered sections:
-// every Chrome tab group first (in first-seen order), then one
-// "Other tabs" section per window for ungrouped tabs (in first-seen order).
-// opts: { ungroupedBy: 'window'|'domain', sort: 'recent'|'oldest'|'name' }.
-// Chrome groups always become group sections first (in first-seen order).
-// Ungrouped tabs go into per-window "Other tabs" sections, or per-domain
-// sections when ungroupedBy==='domain'. Each section's cards are sorted.
-function buildGridSections(tabs, groups, now, opts = {}) {
+// Build the ordered grid rows. opts: { ungroupedBy:'window'|'domain', sort, currentWindowId }.
+// Window mode → window-header rows, each followed by an "Ungrouped" section (if any)
+// then the window's tab groups; current window pinned first. Domain mode → flat
+// group + per-domain sections (no window headers). A row is one of:
+//   { kind:'window-header', windowId, label, isCurrent, tabCount }
+//   { kind:'ungrouped'|'group'|'domain', id, label, color, windowId?, cards, count }
+function buildGridRows(tabs, groups, now, opts = {}) {
   const ungroupedBy = opts.ungroupedBy || 'window';
   const sort = opts.sort || 'recent';
+  const currentWindowId = opts.currentWindowId;
   const groupMap = new Map(groups.map(g => [g.id, g]));
-  const groupSections = new Map();  // groupId -> section
-  const otherSections = new Map();  // windowId or domain key -> section
+  const isGrouped = t => t.groupId != null && t.groupId !== -1 && groupMap.has(t.groupId);
+  const groupLabel = g => `${g.title || 'Tab Group'} (tab group)`;
+  const finish = s => ({ ...s, cards: sortCards(s.cards, sort), count: s.cards.length });
 
+  // ── Domain mode: flat, no window headers ──
+  if (ungroupedBy === 'domain') {
+    const groupSecs = new Map();
+    const domainSecs = new Map();
+    for (const t of tabs) {
+      const card = toCard(t, now);
+      if (isGrouped(t)) {
+        if (!groupSecs.has(t.groupId)) {
+          const g = groupMap.get(t.groupId);
+          groupSecs.set(t.groupId, {
+            kind: 'group', id: `group-${g.id}`, label: groupLabel(g),
+            color: g.color, windowId: g.windowId, cards: [],
+          });
+        }
+        groupSecs.get(t.groupId).cards.push(card);
+      } else {
+        if (!domainSecs.has(t.domain)) {
+          domainSecs.set(t.domain, {
+            kind: 'domain', id: `domain-${t.domain}`, label: t.domain, color: null, cards: [],
+          });
+        }
+        domainSecs.get(t.domain).cards.push(card);
+      }
+    }
+    return [...groupSecs.values(), ...domainSecs.values()].map(finish);
+  }
+
+  // ── Window mode: window blocks ──
+  const windows = new Map(); // windowId -> { windowId, ungrouped:[], groups:Map, tabCount }
   for (const t of tabs) {
+    if (!windows.has(t.windowId)) {
+      windows.set(t.windowId, { windowId: t.windowId, ungrouped: [], groups: new Map(), tabCount: 0 });
+    }
+    const w = windows.get(t.windowId);
+    w.tabCount += 1;
     const card = toCard(t, now);
-    const grouped = t.groupId != null && t.groupId !== -1 && groupMap.has(t.groupId);
-
-    if (grouped) {
-      if (!groupSections.has(t.groupId)) {
+    if (isGrouped(t)) {
+      if (!w.groups.has(t.groupId)) {
         const g = groupMap.get(t.groupId);
-        groupSections.set(t.groupId, {
-          id: `group-${g.id}`, kind: 'group',
-          label: g.title || 'Tab Group', color: g.color, cards: [],
+        w.groups.set(t.groupId, {
+          kind: 'group', id: `group-${g.id}`, label: groupLabel(g),
+          color: g.color, windowId: t.windowId, cards: [],
         });
       }
-      groupSections.get(t.groupId).cards.push(card);
-    } else if (ungroupedBy === 'domain') {
-      const key = `domain-${t.domain}`;
-      if (!otherSections.has(key)) {
-        otherSections.set(key, {
-          id: key, kind: 'domain', label: t.domain, color: null, cards: [],
-        });
-      }
-      otherSections.get(key).cards.push(card);
+      w.groups.get(t.groupId).cards.push(card);
     } else {
-      const key = `window-${t.windowId}`;
-      if (!otherSections.has(key)) {
-        otherSections.set(key, {
-          id: key, kind: 'window', label: 'Other tabs', color: null, cards: [],
-        });
-      }
-      otherSections.get(key).cards.push(card);
+      w.ungrouped.push(card);
     }
   }
 
-  const sections = [...groupSections.values(), ...otherSections.values()];
-  return sections.map(s => ({
-    ...s, cards: sortCards(s.cards, sort), count: s.cards.length,
-  }));
+  // Order windows: current first, then first-seen.
+  let winList = [...windows.values()];
+  if (currentWindowId != null) {
+    winList = [
+      ...winList.filter(w => w.windowId === currentWindowId),
+      ...winList.filter(w => w.windowId !== currentWindowId),
+    ];
+  }
+  const otherTotal = currentWindowId != null
+    ? winList.filter(w => w.windowId !== currentWindowId).length
+    : winList.length;
+
+  const rows = [];
+  let plainIdx = 0, otherIdx = 0;
+  for (const w of winList) {
+    let label;
+    if (currentWindowId == null) {
+      label = `Window ${++plainIdx}`;
+    } else if (w.windowId === currentWindowId) {
+      label = 'This window';
+    } else {
+      otherIdx += 1;
+      label = otherTotal > 1 ? `Other window ${otherIdx}` : 'Other window';
+    }
+    rows.push({
+      kind: 'window-header', windowId: w.windowId, label,
+      isCurrent: w.windowId === currentWindowId, tabCount: w.tabCount,
+    });
+    if (w.ungrouped.length) {
+      rows.push(finish({
+        kind: 'ungrouped', id: `ungrouped-${w.windowId}`, label: 'Ungrouped',
+        color: null, windowId: w.windowId, cards: w.ungrouped,
+      }));
+    }
+    for (const g of w.groups.values()) rows.push(finish(g));
+  }
+  return rows;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     countTone, STALE_MS, isStale, staleTabs, normalizeUrl, duplicateGroups,
-    buildGridSections, toCard, relativeAge, sortCards, freshness,
+    buildGridRows, toCard, relativeAge, sortCards, freshness,
   };
 }
