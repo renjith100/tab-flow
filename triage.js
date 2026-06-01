@@ -53,6 +53,35 @@ function duplicateGroups(tabs) {
   return groups;
 }
 
+// Short relative-age label from a lastAccessed timestamp (ms). '' when unknown.
+function relativeAge(lastAccessed, now) {
+  if (!lastAccessed) return '';
+  const s = Math.max(0, Math.floor((now - lastAccessed) / 1000));
+  if (s < 60) return 'now';
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + 'm';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h';
+  const d = Math.floor(h / 24);
+  if (d < 7) return d + 'd';
+  if (d < 30) return Math.floor(d / 7) + 'w';
+  return Math.floor(d / 30) + 'mo';
+}
+
+// Return a sorted copy of cards. modes: 'recent' (default), 'oldest', 'name'.
+function sortCards(cards, mode) {
+  const copy = [...cards];
+  if (mode === 'oldest') {
+    copy.sort((a, b) => (a.lastAccessed || 0) - (b.lastAccessed || 0));
+  } else if (mode === 'name') {
+    copy.sort((a, b) =>
+      (a.title || '').toLowerCase().localeCompare((b.title || '').toLowerCase()));
+  } else {
+    copy.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0));
+  }
+  return copy;
+}
+
 // Build a card view-model from a tab item. OG fields (image/description) are
 // left undefined here and populated later by the OG-enrichment layer.
 function toCard(t, now) {
@@ -109,6 +138,6 @@ function buildGridSections(tabs, groups, now) {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     countTone, STALE_MS, isStale, staleTabs, normalizeUrl, duplicateGroups,
-    buildGridSections, toCard,
+    buildGridSections, toCard, relativeAge, sortCards,
   };
 }

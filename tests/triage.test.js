@@ -75,3 +75,28 @@ test('buildGridSections: group sections first, then per-window Other tabs', () =
   assert.strictEqual(cardB.id, 2);
   assert.strictEqual(cardB.stale, true);
 });
+
+test('relativeAge formats buckets', () => {
+  const now = 1_000_000_000_000;
+  const ago = ms => now - ms;
+  assert.strictEqual(T.relativeAge(0, now), '');
+  assert.strictEqual(T.relativeAge(undefined, now), '');
+  assert.strictEqual(T.relativeAge(ago(59_000), now), 'now');
+  assert.strictEqual(T.relativeAge(ago(60_000), now), '1m');
+  assert.strictEqual(T.relativeAge(ago(60 * 60_000), now), '1h');
+  assert.strictEqual(T.relativeAge(ago(24 * 60 * 60_000), now), '1d');
+  assert.strictEqual(T.relativeAge(ago(7 * 24 * 60 * 60_000), now), '1w');
+  assert.strictEqual(T.relativeAge(ago(30 * 24 * 60 * 60_000), now), '1mo');
+});
+
+test('sortCards orders and does not mutate', () => {
+  const cards = [
+    { id: 1, title: 'Banana', lastAccessed: 30 },
+    { id: 2, title: 'apple',  lastAccessed: 10 },
+    { id: 3, title: 'Cherry', lastAccessed: 20 },
+  ];
+  assert.deepStrictEqual(T.sortCards(cards, 'recent').map(c => c.id), [1, 3, 2]);
+  assert.deepStrictEqual(T.sortCards(cards, 'oldest').map(c => c.id), [2, 3, 1]);
+  assert.deepStrictEqual(T.sortCards(cards, 'name').map(c => c.id), [2, 1, 3]);
+  assert.deepStrictEqual(cards.map(c => c.id), [1, 2, 3]);
+});
