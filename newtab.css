@@ -744,7 +744,7 @@ html[data-view="coverflow"] .select-bar { display: none !important; }
 
 /* ── CARD RELATIVE-AGE PILL (top-left, over the image) ── */
 .gc-age-pill {
-  position: absolute; right: 9px; bottom: 9px; z-index: 2;
+  position: absolute; left: 9px; bottom: 9px; z-index: 2;
   padding: 5px 12px; border-radius: 13px;
   background: rgba(0, 0, 0, .55); backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, .14);
