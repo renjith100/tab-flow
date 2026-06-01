@@ -227,6 +227,29 @@ function buildCards() {
       card.appendChild(titleEl);
       card.appendChild(domainEl);
 
+      // Relative-age pill (shared with the grid)
+      const now = Date.now();
+      const pill = makeAgePill({
+        ageLabel:  relativeAge(t.lastAccessed, now),
+        freshness: freshness(t.lastAccessed, now),
+        stale:     isStale(t, now),
+      });
+      if (pill) card.appendChild(pill);
+
+      // Hover close button
+      const close = document.createElement('button');
+      close.className = 'gc-close';
+      close.textContent = '×';
+      close.title = 'Close tab';
+      close.addEventListener('mousedown', ev => ev.stopPropagation());
+      close.addEventListener('touchstart', ev => ev.stopPropagation(), { passive: true });
+      close.addEventListener('click', ev => {
+        ev.stopPropagation();
+        chrome.tabs.remove(t.id);
+        showUndoToast(t.title || 'tab');
+      });
+      card.appendChild(close);
+
       // Drag-to-close only on tab cards
       card.addEventListener('mousedown',  e => initDrag(e, i));
       card.addEventListener('touchstart', e => initDrag(e, i), { passive: false });

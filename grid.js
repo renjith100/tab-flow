@@ -42,6 +42,25 @@ function fillFavicon(banner, card) {
   }
 }
 
+// Build the relative-age pill (shared by Grid and Cover Flow). Returns null
+// when there's no age. Expects { ageLabel, freshness, stale }.
+function makeAgePill(card) {
+  if (!card.ageLabel) return null;
+  const pill = document.createElement('div');
+  pill.className = card.stale ? 'gc-age-pill is-stale-age' : 'gc-age-pill';
+  pill.textContent = card.stale ? `> ${card.ageLabel}` : card.ageLabel;
+  if (!card.stale) {
+    // Freshness gradient: bright green when just used → near-black by ~7 days.
+    const f = card.freshness;                 // 1 = fresh, 0 = ~7d
+    const sat   = Math.round(30 + 55 * f);    // 30%..85%
+    const light = Math.round(5 + 37 * f);     // 5% (≈black) .. 42% (bright green)
+    pill.style.background = `hsla(145, ${sat}%, ${light}%, .92)`;
+    pill.style.borderColor = `hsla(145, ${sat}%, ${Math.min(light + 22, 72)}%, .6)`;
+    pill.style.color = '#eafff1';
+  }
+  return pill;
+}
+
 // One tab card.
 function buildGridCard(card, ctx) {
   const el = document.createElement('article');
@@ -51,21 +70,8 @@ function buildGridCard(card, ctx) {
   if (ctx.isSelected(card.id)) el.classList.add('is-selected');
 
   const banner = buildCardBanner(card);
-  if (card.ageLabel) {
-    const pill = document.createElement('div');
-    pill.className = card.stale ? 'gc-age-pill is-stale-age' : 'gc-age-pill';
-    pill.textContent = card.stale ? `> ${card.ageLabel}` : card.ageLabel;
-    if (!card.stale) {
-      // Freshness gradient: bright green when just used → near-black by ~7 days.
-      const f = card.freshness;                 // 1 = fresh, 0 = ~7d
-      const sat   = Math.round(30 + 55 * f);    // 30%..85%
-      const light = Math.round(5 + 37 * f);     // 5% (≈black) .. 42% (bright green)
-      pill.style.background = `hsla(145, ${sat}%, ${light}%, .92)`;
-      pill.style.borderColor = `hsla(145, ${sat}%, ${Math.min(light + 22, 72)}%, .6)`;
-      pill.style.color = '#eafff1';
-    }
-    banner.appendChild(pill);
-  }
+  const pill = makeAgePill(card);
+  if (pill) banner.appendChild(pill);
   el.appendChild(banner);
 
   const close = document.createElement('button');

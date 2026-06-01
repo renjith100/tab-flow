@@ -786,3 +786,7 @@ html[data-view="coverflow"] .select-bar { display: none !important; }
   background: var(--violet-soft); border: 1px solid rgba(139,92,246,.4); color: var(--violet);
 }
 .sb-group:hover { background: rgba(139,92,246,.3); }
+
+/* ── COVER FLOW: age pill + hover close on tab cards ── */
+.card:hover .gc-close { opacity: 1; }
+.gc-age-pill { pointer-events: none; }
