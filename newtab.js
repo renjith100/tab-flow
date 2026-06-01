@@ -857,7 +857,7 @@ async function renderGridView() {
     ? gridTabs.filter(t =>
         t.title.toLowerCase().includes(q) || t.domain.toLowerCase().includes(q))
     : gridTabs;
-  const sections = buildGridSections(shown, groups, now, {
+  const rows = buildGridRows(shown, groups, now, {
     ungroupedBy: gridGroupBy, sort: gridSort, currentWindowId,
   });
 
@@ -869,7 +869,7 @@ async function renderGridView() {
     isSelected:     id => gridSelection.has(id),
   };
 
-  renderGrid(document.getElementById('gridScroll'), sections, ctx);
+  renderGrid(document.getElementById('gridScroll'), rows, ctx);
   updateOverviewHeader(gridTabs, now);
   applyControlState();
 }
