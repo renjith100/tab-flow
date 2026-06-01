@@ -753,10 +753,57 @@ document.addEventListener('touchmove', moveDrag, { passive: false });
 document.addEventListener('touchend',  endDrag);
 
 // ── Init: load real Chrome tabs + tab groups ──────────────────────────────────
-// Replaced with the real implementation in Task 4.
-function renderGridView() {
-  document.getElementById('gridScroll').textContent = 'Grid coming up…';
+// Selection state for multi-select (Task 6 wires bulk actions to it).
+let gridSelection = new Set();
+
+// Loaded tab list backing the grid (all windows).
+let gridTabs = [];
+
+async function renderGridView() {
+  const [chromeTabs, groups] = await Promise.all([
+    new Promise(r => chrome.tabs.query({}, r)),
+    new Promise(r => chrome.tabGroups.query({}, r)),
+  ]);
+
+  const selfUrl = chrome.runtime.getURL('newtab.html');
+  gridTabs = chromeTabs
+    .filter(t => t.url !== selfUrl)
+    .map(chromeTabToTabItem);
+
+  const now = Date.now();
+  const sections = buildGridSections(gridTabs, groups, now);
+
+  const ctx = {
+    onOpen:         id => focusTab(id),
+    onClose:        id => closeGridTab(id),
+    onCloseMany:    ids => closeGridTabs(ids),
+    onToggleSelect: id => toggleGridSelect(id),
+    isSelected:     id => gridSelection.has(id),
+  };
+
+  renderGrid(document.getElementById('gridScroll'), sections, ctx);
+  updateOverviewHeader(gridTabs, now); // implemented in Task 5
 }
+
+// Activate a tab (and focus its window) from the grid.
+function focusTab(tabId) {
+  const tab = gridTabs.find(t => t.id === tabId);
+  chrome.tabs.update(tabId, { active: true });
+  if (tab) chrome.windows.update(tab.windowId, { focused: true });
+}
+
+// Single close from the grid (Task 6 adds undo).
+function closeGridTab(tabId) {
+  chrome.tabs.remove(tabId);
+}
+
+// Placeholders wired fully in Task 5/6.
+function closeGridTabs(ids) { chrome.tabs.remove(ids); }
+function toggleGridSelect(id) {
+  if (gridSelection.has(id)) gridSelection.delete(id); else gridSelection.add(id);
+  renderCurrentView();
+}
+function updateOverviewHeader() { /* implemented in Task 5 */ }
 
 // Dispatch rendering to the active view. Grid loads all windows; Cover Flow
 // keeps its current-window behavior in buildCards()/updatePositions().
