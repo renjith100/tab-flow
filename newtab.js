@@ -958,13 +958,18 @@ function animateGridClose(closingEl, done) {
     void scroll.offsetWidth;
 
     // PLAY: clear the offset with a transition → cards glide to their new spots.
-    moved.forEach(c => {
-      c.style.transition = 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)';
+    // Stagger by DOM order (cascades outward from the gap), capped so big grids
+    // stay snappy.
+    const STEP = 22, MAX_DELAY = 160, DUR = 300;
+    moved.forEach((c, i) => {
+      const delay = Math.min(i * STEP, MAX_DELAY);
+      c.style.transition = `transform ${DUR}ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms`;
       c.style.transform = '';
     });
 
+    const maxDelay = moved.length ? Math.min((moved.length - 1) * STEP, MAX_DELAY) : 0;
     if (done) done();                 // actually close the tab now
-    setTimeout(() => { gridAnimating = false; }, 340);
+    setTimeout(() => { gridAnimating = false; }, DUR + maxDelay + 40);
   }, 180);
 }
 
