@@ -840,6 +840,9 @@ let gridSelection = new Set();
 // Loaded tab list backing the grid (all windows).
 let gridTabs = [];
 
+// True while a grid close animation is running — defers the live-sync rebuild.
+let gridAnimating = false;
+
 // Grid organization prefs (persisted).
 let gridGroupBy = localStorage.getItem('tabflow:groupBy') || 'window'; // 'window'|'domain'
 let gridSort    = localStorage.getItem('tabflow:sort')    || 'recent'; // 'recent'|'oldest'|'name'
@@ -906,11 +909,58 @@ function focusTab(tabId) {
 let lastGridClosedCount = 0;
 
 function closeGridTab(tabId) {
-  lastGridClosedCount = 1;
-  chrome.tabs.remove(tabId, () => {
-    gridSelection.delete(tabId);
-    showUndoToast('Closed 1 tab');
-  });
+  const scroll = document.getElementById('gridScroll');
+  const closingEl = scroll && scroll.querySelector(`.grid-card[data-tab-id="${tabId}"]`);
+  const remove = () => {
+    lastGridClosedCount = 1;
+    chrome.tabs.remove(tabId, () => {
+      gridSelection.delete(tabId);
+      showUndoToast('Closed 1 tab');
+    });
+  };
+  if (closingEl) animateGridClose(closingEl, remove);
+  else remove();
+}
+
+// Poof the closing card out, then FLIP the remaining cards into their new spots.
+function animateGridClose(closingEl, done) {
+  const scroll = document.getElementById('gridScroll');
+  const cards = [...scroll.querySelectorAll('.grid-card')];
+  const first = new Map();
+  cards.forEach(c => first.set(c, c.getBoundingClientRect()));
+
+  gridAnimating = true;
+  closingEl.style.pointerEvents = 'none';
+  closingEl.classList.add('gc-closing');
+
+  // After the poof, collapse the closed card's space and animate the rest in.
+  setTimeout(() => {
+    closingEl.style.display = 'none';
+    const others = cards.filter(c => c !== closingEl);
+
+    others.forEach(c => {
+      const last = c.getBoundingClientRect();
+      const f = first.get(c);
+      const dx = f.left - last.left;
+      const dy = f.top - last.top;
+      if (dx || dy) {
+        c.style.transition = 'none';
+        c.style.transform = `translate(${dx}px, ${dy}px)`;
+      }
+    });
+
+    requestAnimationFrame(() => {
+      others.forEach(c => {
+        if (c.style.transform) {
+          c.style.transition = 'transform 260ms cubic-bezier(0.22, 1, 0.36, 1)';
+          c.style.transform = '';
+        }
+      });
+    });
+
+    if (done) done();                 // actually close the tab now
+    setTimeout(() => { gridAnimating = false; }, 280);
+  }, 170);
 }
 
 function closeGridTabs(ids) {
@@ -1094,7 +1144,16 @@ async function init() {
 // ── Live sync: re-fetch and rebuild when tabs change externally ────────────────
 async function reloadTabs() {
   // In grid mode, just re-render the grid (it re-queries all windows itself).
-  if (currentView === 'grid') { renderGridView(); return; }
+  if (currentView === 'grid') {
+    // Don't rebuild mid-animation — it would destroy the cards being animated.
+    if (gridAnimating) {
+      clearTimeout(reloadTimer);
+      reloadTimer = setTimeout(reloadTabs, 150);
+      return;
+    }
+    renderGridView();
+    return;
+  }
 
   // Don't rebuild while a close animation is running — buildCards() would destroy
   // the DOM element the rAF loop is writing to, making the animation invisible.

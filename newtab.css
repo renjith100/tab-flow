@@ -790,3 +790,10 @@ html[data-view="coverflow"] .select-bar { display: none !important; }
 /* ── COVER FLOW: age pill + hover close on tab cards ── */
 .card:hover .gc-close { opacity: 1; }
 .gc-age-pill { pointer-events: none; }
+
+/* ── GRID CARD CLOSE (poof out) ── */
+.grid-card.gc-closing {
+  transform: scale(0.55);
+  opacity: 0;
+  transition: transform .17s ease, opacity .17s ease;
+}
