@@ -86,26 +86,34 @@ function sortCards(cards, mode) {
 // left undefined here and populated later by the OG-enrichment layer.
 function toCard(t, now) {
   return {
-    id:          t.id,
-    windowId:    t.windowId,
-    title:       t.title,
-    domain:      t.domain,
-    url:         t.url,
-    favIconUrl:  t.favIconUrl,
-    audible:     t.audible,
-    stale:       isStale(t, now),
-    image:       undefined,
-    description: undefined,
+    id:           t.id,
+    windowId:     t.windowId,
+    title:        t.title,
+    domain:       t.domain,
+    url:          t.url,
+    favIconUrl:   t.favIconUrl,
+    audible:      t.audible,
+    lastAccessed: t.lastAccessed,
+    ageLabel:     relativeAge(t.lastAccessed, now),
+    stale:        isStale(t, now),
+    image:        undefined,
+    description:  undefined,
   };
 }
 
 // Turn the flat tab list + Chrome groups into ordered sections:
 // every Chrome tab group first (in first-seen order), then one
 // "Other tabs" section per window for ungrouped tabs (in first-seen order).
-function buildGridSections(tabs, groups, now) {
+// opts: { ungroupedBy: 'window'|'domain', sort: 'recent'|'oldest'|'name' }.
+// Chrome groups always become group sections first (in first-seen order).
+// Ungrouped tabs go into per-window "Other tabs" sections, or per-domain
+// sections when ungroupedBy==='domain'. Each section's cards are sorted.
+function buildGridSections(tabs, groups, now, opts = {}) {
+  const ungroupedBy = opts.ungroupedBy || 'window';
+  const sort = opts.sort || 'recent';
   const groupMap = new Map(groups.map(g => [g.id, g]));
-  const groupSections = new Map();  // groupId  -> section
-  const windowSections = new Map(); // windowId -> section
+  const groupSections = new Map();  // groupId -> section
+  const otherSections = new Map();  // windowId or domain key -> section
 
   for (const t of tabs) {
     const card = toCard(t, now);
@@ -120,19 +128,29 @@ function buildGridSections(tabs, groups, now) {
         });
       }
       groupSections.get(t.groupId).cards.push(card);
-    } else {
-      if (!windowSections.has(t.windowId)) {
-        windowSections.set(t.windowId, {
-          id: `window-${t.windowId}`, kind: 'window',
-          label: 'Other tabs', color: null, cards: [],
+    } else if (ungroupedBy === 'domain') {
+      const key = `domain-${t.domain}`;
+      if (!otherSections.has(key)) {
+        otherSections.set(key, {
+          id: key, kind: 'domain', label: t.domain, color: null, cards: [],
         });
       }
-      windowSections.get(t.windowId).cards.push(card);
+      otherSections.get(key).cards.push(card);
+    } else {
+      const key = `window-${t.windowId}`;
+      if (!otherSections.has(key)) {
+        otherSections.set(key, {
+          id: key, kind: 'window', label: 'Other tabs', color: null, cards: [],
+        });
+      }
+      otherSections.get(key).cards.push(card);
     }
   }
 
-  const sections = [...groupSections.values(), ...windowSections.values()];
-  return sections.map(s => ({ ...s, count: s.cards.length }));
+  const sections = [...groupSections.values(), ...otherSections.values()];
+  return sections.map(s => ({
+    ...s, cards: sortCards(s.cards, sort), count: s.cards.length,
+  }));
 }
 
 if (typeof module !== 'undefined' && module.exports) {

@@ -100,3 +100,42 @@ test('sortCards orders and does not mutate', () => {
   assert.deepStrictEqual(T.sortCards(cards, 'name').map(c => c.id), [2, 1, 3]);
   assert.deepStrictEqual(cards.map(c => c.id), [1, 2, 3]);
 });
+
+test('toCard carries lastAccessed and ageLabel', () => {
+  const now = 1_000_000_000_000;
+  const card = T.toCard(
+    { id: 1, windowId: 1, title: 'X', domain: 'x.com', url: 'https://x.com',
+      favIconUrl: '', audible: false, groupId: -1,
+      lastAccessed: now - 2 * 60 * 60_000 }, now);
+  assert.strictEqual(card.lastAccessed, now - 2 * 60 * 60_000);
+  assert.strictEqual(card.ageLabel, '2h');
+});
+
+test('buildGridSections ungroupedBy=domain keeps groups, clusters rest by domain', () => {
+  const now = 100 * T.STALE_MS;
+  const tabs = [
+    { id: 1, windowId: 10, groupId: 5,  title: 'A', domain: 'a.com', url: 'https://a.com', favIconUrl: '', audible: false, lastAccessed: now },
+    { id: 2, windowId: 10, groupId: -1, title: 'B', domain: 'b.com', url: 'https://b.com/1', favIconUrl: '', audible: false, lastAccessed: now },
+    { id: 3, windowId: 11, groupId: -1, title: 'C', domain: 'b.com', url: 'https://b.com/2', favIconUrl: '', audible: false, lastAccessed: now },
+  ];
+  const groups = [{ id: 5, title: 'Work', color: 'blue', windowId: 10 }];
+  const sections = T.buildGridSections(tabs, groups, now, { ungroupedBy: 'domain' });
+
+  assert.strictEqual(sections[0].kind, 'group');
+  const domainSec = sections.find(s => s.kind === 'domain');
+  assert.ok(domainSec);
+  assert.strictEqual(domainSec.label, 'b.com');
+  assert.strictEqual(domainSec.count, 2);
+});
+
+test('buildGridSections sorts section cards by opts.sort', () => {
+  const now = 100 * T.STALE_MS;
+  const tabs = [
+    { id: 1, windowId: 10, groupId: -1, title: 'Z', domain: 'a.com', url: 'https://a.com/z', favIconUrl: '', audible: false, lastAccessed: 10 },
+    { id: 2, windowId: 10, groupId: -1, title: 'A', domain: 'a.com', url: 'https://a.com/a', favIconUrl: '', audible: false, lastAccessed: 99 },
+  ];
+  const recent = T.buildGridSections(tabs, [], now, { sort: 'recent' });
+  assert.deepStrictEqual(recent[0].cards.map(c => c.id), [2, 1]);
+  const byName = T.buildGridSections(tabs, [], now, { sort: 'name' });
+  assert.deepStrictEqual(byName[0].cards.map(c => c.id), [2, 1]);
+});
