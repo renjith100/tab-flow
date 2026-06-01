@@ -54,7 +54,7 @@ function buildGridCard(card, ctx) {
   if (card.ageLabel) {
     const pill = document.createElement('div');
     pill.className = card.stale ? 'gc-age-pill is-stale-age' : 'gc-age-pill';
-    pill.textContent = card.stale ? `⏳ ${card.ageLabel}` : card.ageLabel;
+    pill.textContent = card.stale ? `> ${card.ageLabel}` : card.ageLabel;
     if (!card.stale) {
       // Freshness gradient: bright green when just used → dull green by ~7 days.
       const f = card.freshness;                 // 1 = fresh, 0 = ~7d
