@@ -6,7 +6,7 @@
 
 ## Problem
 
-TabFlow today is a beautiful Cover Flow *switcher*. It helps you move between
+TabFlow today is a beautiful Cover Flow _switcher_. It helps you move between
 tabs, but it does nothing to help you **reduce** them. Users keep 50–80+ tabs
 open, forget TabFlow exists, and the clutter never goes down. The Cover Flow
 shows only ~5 cards at once, so there is no bird's-eye view to act on and no
@@ -37,12 +37,12 @@ keeps the clutter in your face.
 
 ## Decisions (locked)
 
-| Decision | Choice |
-|---|---|
-| Default view | **Grid** (Cover Flow one click away) |
-| Card data depth | **Full OG**: description + preview image |
-| Stale threshold | **Untouched 7+ days** (via `tab.lastAccessed`) |
-| Bulk-close safety net | **Undo toast only** (extend existing ⌘Z) |
+| Decision              | Choice                                         |
+| --------------------- | ---------------------------------------------- |
+| Default view          | **Grid** (Cover Flow one click away)           |
+| Card data depth       | **Full OG**: description + preview image       |
+| Stale threshold       | **Untouched 7+ days** (via `tab.lastAccessed`) |
+| Bulk-close safety net | **Undo toast only** (extend existing ⌘Z)       |
 
 ## Architecture
 
@@ -83,7 +83,7 @@ is additive.
 
 ### Data flow
 
-```
+```text
 Page visited ──> og-scraper.js (content script, document_idle)
                       │ chrome.runtime.sendMessage({og payload})
                       ▼
@@ -106,6 +106,7 @@ own image URL. Nothing is sent to any TabFlow-controlled server.
 ## UI Spec
 
 ### Header (sticky)
+
 - Open-tab count, tone-escalating: **calm** (< 15), **amber** (15–40),
   **red** (40+). E.g. "82 tabs open · 3 windows · 4 groups".
 - Smart chips: **"N stale · Close all"**, **"N duplicates · Merge"** (keep the
@@ -113,6 +114,7 @@ own image URL. Nothing is sent to any TabFlow-controlled server.
 - View toggle: ⊞ Grid / ≋ Cover Flow.
 
 ### Card anatomy — image-led, beautiful & simple
+
 The **OG preview image is the hero**: a tall (~16:9) banner that fills the top of
 the card **edge-to-edge**, with no padding above it. Below it, a calm text block:
 a favicon + domain line, a bold **title** (1–2 line clamp), and a quiet
@@ -129,10 +131,12 @@ a favicon + domain line, a bold **title** (1–2 line clamp), and a quiet
   existing card aesthetic.
 
 ### Sections
+
 Chrome **tab groups** first (using existing `GROUP_COLORS`), then **per-window
 "Other tabs"**. Each section header shows a count and a "close section" action.
 
 ### Layout — responsive flow
+
 A true flow grid: cards keep a **fixed ideal width (~260px, the approved
 single-card size)** and **never squish**. The number of cards per row grows and
 shrinks with the viewport width — e.g. `grid-template-columns:
@@ -141,12 +145,14 @@ cards reflow down to 4, 3, 2 while holding their shape. Sections stack
 vertically; the flow runs within each section.
 
 ### Interactions
+
 - Click card → switch to that tab. Click × → close (with undo).
 - **Multi-select** (click to toggle / shift-range) → bulk close selected.
 - Smart chips → bulk close stale / merge duplicates.
 - **Undo**: extend the existing ⌘Z toast to cover single and bulk closes.
 
 ### Keyboard
+
 Arrows move focused cell, Enter switches, close-key removes focused, `/` focuses
 search (filters all tabs by title/domain across sections), Esc closes the
 TabFlow tab. Cover Flow keys unchanged when in Cover Flow.
@@ -154,6 +160,7 @@ TabFlow tab. Cover Flow keys unchanged when in Cover Flow.
 ## Permissions & Privacy
 
 Adds to `manifest.json`:
+
 - `scripting` — register the OG content script.
 - `storage` — persist OG cache + view preference.
 - `host_permissions: ["<all_urls>"]` — read OG meta on visited pages.
