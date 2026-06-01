@@ -112,11 +112,21 @@ own image URL. Nothing is sent to any TabFlow-controlled server.
   most-recently-active, close the rest).
 - View toggle: ⊞ Grid / ≋ Cover Flow.
 
-### Card anatomy
-OG preview image (favicon-on-gradient fallback) · favicon + domain · title ·
-OG description (2-line clamp) · hover **close ×** · **stale badge** when
-`now - lastAccessed > 7 days`. Active tab gets the violet active treatment
-consistent with current design tokens.
+### Card anatomy — image-led, beautiful & simple
+The **OG preview image is the hero**: a tall (~16:9) banner that fills the top of
+the card **edge-to-edge**, with no padding above it. Below it, a calm text block:
+a favicon + domain line, a bold **title** (1–2 line clamp), and a quiet
+**OG description** (2-line clamp). Generous spacing, minimal borders.
+
+- **Close ×** floats as a soft translucent circle on the top-right of the image
+  (visible on hover; always reachable by keyboard).
+- **No OG image** → favicon centered on a soft gradient fills the same banner
+  area (cards stay the same shape; the grid never looks ragged).
+- **Stale badge** (`now - lastAccessed > 7 days`) shown in the text block.
+- **Active tab** gets the violet active treatment consistent with current design
+  tokens (`--violet`, active glow).
+- Rounded corners (~14–16px), subtle 1px border, soft shadow — matching the
+  existing card aesthetic.
 
 ### Sections
 Chrome **tab groups** first (using existing `GROUP_COLORS`), then **per-window
