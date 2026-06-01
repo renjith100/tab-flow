@@ -543,6 +543,15 @@ document.addEventListener('keydown', e => {
   // ── Grid-mode keyboard ──
   if (currentView === 'grid') {
     if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); undoClose(); return; }
+
+    // While typing in search, don't hijack keys (Escape blurs back to the grid).
+    if (inSearch) {
+      if (e.key === 'Escape') searchEl.blur();
+      return;
+    }
+
+    if (e.key === '/') { e.preventDefault(); searchEl.focus(); return; }
+
     const cards = [...document.querySelectorAll('.grid-card')];
     if (!cards.length) return;
     let idx = cards.findIndex(c => c.classList.contains('kb-focus'));
@@ -627,7 +636,10 @@ let searchTimer = null;
 searchEl.addEventListener('input', e => {
   const value = e.target.value;
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => applyFilter(value), 150);
+  searchTimer = setTimeout(() => {
+    if (currentView === 'grid') renderGridView();
+    else applyFilter(value);
+  }, 150);
 });
 
 // ── Trackpad / mouse-wheel ────────────────────────────────────────────────────
@@ -815,7 +827,14 @@ async function renderGridView() {
     .map(chromeTabToTabItem);
 
   const now = Date.now();
-  const sections = buildGridSections(gridTabs, groups, now);
+
+  // Apply the search query to the cards shown (count + chips still cover all tabs).
+  const q = searchEl.value.toLowerCase().trim();
+  const shown = q
+    ? gridTabs.filter(t =>
+        t.title.toLowerCase().includes(q) || t.domain.toLowerCase().includes(q))
+    : gridTabs;
+  const sections = buildGridSections(shown, groups, now);
 
   const ctx = {
     onOpen:         id => focusTab(id),

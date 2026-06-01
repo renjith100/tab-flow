@@ -549,8 +549,29 @@ body::before {
   100% { transform: translateX(315px) translateY(-332px) rotateZ(9deg)   scale(0.27); opacity: 0; }
 }
 
+/* ── PERSISTENT TOP BAR (both views) ── */
+:root { --topbar-h: 56px; }
+
+.header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  height: var(--topbar-h);
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 20px; margin: 0;
+  background: rgba(7, 7, 13, 0.82);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  animation: none;
+}
+.header .logo { font-size: 20px; flex-shrink: 0; }
+
+/* Search lives in the bar: flexible width, centered between logo and toggle. */
+.header .search-wrap {
+  position: relative; flex: 1; max-width: 460px; margin: 0 auto;
+}
+.header .search { width: 100%; height: 36px; }
+
 /* ── VIEW MODE SWITCHING ── */
-/* In grid mode the body scrolls and content is top-aligned; in coverflow it stays centered. */
+/* Grid: scrolls, top-aligned; content clears the fixed bar. */
 html[data-view="grid"], html[data-view="grid"] body {
   height: auto;
   min-height: 100vh;
@@ -558,21 +579,23 @@ html[data-view="grid"], html[data-view="grid"] body {
   overflow-y: auto;
   display: block;
 }
+html[data-view="grid"] body { padding-top: var(--topbar-h); }
+
+/* Coverflow: stays centered, but pushed below the fixed bar. */
+html[data-view="coverflow"] body { padding-top: var(--topbar-h); }
 
 /* Coverflow-only elements hidden in grid mode */
 html[data-view="grid"] .stage-wrap,
 html[data-view="grid"] .detail,
-html[data-view="grid"] .footer,
-html[data-view="grid"] .search-wrap { display: none; }
+html[data-view="grid"] .footer { display: none; }
 
 /* Grid-only elements hidden in coverflow mode */
 html[data-view="coverflow"] .overview-header,
 html[data-view="coverflow"] .grid-scroll { display: none; }
 
 /* ── VIEW TOGGLE ── */
-.header { display: flex; align-items: center; gap: 18px; }
 .view-toggle {
-  display: flex; gap: 4px;
+  display: flex; gap: 4px; flex-shrink: 0;
   background: rgba(255,255,255,.04);
   border: 1px solid rgba(255,255,255,.09);
   border-radius: 12px; padding: 3px;
