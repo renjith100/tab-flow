@@ -245,8 +245,10 @@ function buildCards() {
       close.addEventListener('touchstart', ev => ev.stopPropagation(), { passive: true });
       close.addEventListener('click', ev => {
         ev.stopPropagation();
-        chrome.tabs.remove(t.id);
-        showUndoToast(t.title || 'tab');
+        if (isAnimatingRemoval || tabsClosing.has(t.id)) return;
+        // Reuse the carousel's poof-close animation (handles removal + undo toast).
+        drag.base = getPos(i - active);
+        poofClose(i, card, 0, 0);
       });
       card.appendChild(close);
 
