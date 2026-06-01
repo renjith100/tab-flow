@@ -5,8 +5,9 @@
 group" was removed on 2026-06-02** (see Goals). This banner is the single source of
 truth: any promote/"Group these"/`groupSelected` references in the sections below
 (Decisions, `newtab.js`, Data Flow, Edge Handling, Testing) are **historical** —
-kept as the original design record. Shipped behavior is **multi-select + bulk
-close only**.
+kept as the original design record. **Multi-select was also removed (2026-06-02).**
+Shipped close actions are: **per-card ×**, a **section "Close all"**, and the
+**stale / duplicate chips** — all undoable.
 **Author:** Renjith (with Claude)
 **Builds on:** `2026-06-01-tabflow-overview-grid-design.md` (Grid v1, branch `feat/overview-grid`)
 
@@ -26,7 +27,9 @@ TabFlow's existing permissions (`tabs`, `tabGroups`, `windows`, `sessions`; the
 4. **Smarter stale signals** — relative age on every card; stale (7+ days) flagged in place.
 5. ~~**Promote selection → Chrome tab group**~~ — **removed (2026-06-02).** Off-mission
    (the grid is for triage/closing; Chrome already groups tabs natively) and the
-   `prompt()` flow was clunky. Multi-select + bulk close are kept.
+   `prompt()` flow was clunky. (Multi-select was also removed on 2026-06-02 — see
+   the status banner at the top; per-card close, section "Close all", and the
+   triage chips remain.)
 
 ## Non-Goals
 

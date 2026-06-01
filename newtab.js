@@ -818,9 +818,6 @@ document.addEventListener('touchmove', moveDrag, { passive: false });
 document.addEventListener('touchend',  endDrag);
 
 // ── Init: load real Chrome tabs + tab groups ──────────────────────────────────
-// Selection state for multi-select (Task 6 wires bulk actions to it).
-let gridSelection = new Set();
-
 // Loaded tab list backing the grid (current window only).
 let gridTabs = [];
 
@@ -863,11 +860,9 @@ async function renderGridView() {
   });
 
   const ctx = {
-    onOpen:         id => focusTab(id),
-    onClose:        id => closeGridTab(id),
-    onCloseMany:    ids => closeGridTabs(ids),
-    onToggleSelect: id => toggleGridSelect(id),
-    isSelected:     id => gridSelection.has(id),
+    onOpen:      id => focusTab(id),
+    onClose:     id => closeGridTab(id),
+    onCloseMany: ids => closeGridTabs(ids),
   };
 
   renderGrid(document.getElementById('gridScroll'), rows, ctx);
@@ -901,7 +896,6 @@ function closeGridTab(tabId) {
     lastGridClosedCount = 1;
     chrome.tabs.remove(tabId, () => {
       void chrome.runtime.lastError; // ignore "no tab" if already gone
-      gridSelection.delete(tabId);
       showUndoToast('1 tab');
     });
   };
@@ -958,28 +952,14 @@ function animateGridClose(closingEl, done) {
   }, 180);
 }
 
+// Bulk close — used by the section "Close all" and the stale/duplicate chips.
 function closeGridTabs(ids) {
   if (!ids.length) return;
   lastGridClosedCount = ids.length;
   chrome.tabs.remove(ids, () => {
     void chrome.runtime.lastError; // ignore "no tab" if any already gone
-    ids.forEach(id => gridSelection.delete(id));
     showUndoToast(`${ids.length} tabs`);
   });
-}
-
-function toggleGridSelect(id) {
-  if (gridSelection.has(id)) gridSelection.delete(id); else gridSelection.add(id);
-  updateSelectBar();
-  // Re-render to reflect selected outlines.
-  renderCurrentView();
-}
-
-function updateSelectBar() {
-  const bar = document.getElementById('selectBar');
-  const n = gridSelection.size;
-  bar.classList.toggle('show', n > 0);
-  document.getElementById('selectCount').textContent = `${n} selected`;
 }
 
 // Render the count line (tone-escalating) and triage chips.
@@ -1035,15 +1015,6 @@ function renderCurrentView() {
 document.getElementById('viewToggle').addEventListener('click', e => {
   const btn = e.target.closest('.vt-btn');
   if (btn) setView(btn.dataset.mode);
-});
-
-document.getElementById('selClose').addEventListener('click', () => {
-  closeGridTabs([...gridSelection]);
-});
-document.getElementById('selClear').addEventListener('click', () => {
-  gridSelection.clear();
-  updateSelectBar();
-  renderCurrentView();
 });
 
 document.getElementById('ovGroup').addEventListener('click', e => {
