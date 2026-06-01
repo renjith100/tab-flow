@@ -938,6 +938,8 @@ function animateGridClose(closingEl, done) {
     closingEl.style.display = 'none';
     const others = cards.filter(c => c !== closingEl);
 
+    // INVERT: jump each moved card back to its old position (no transition).
+    const moved = [];
     others.forEach(c => {
       const last = c.getBoundingClientRect();
       const f = first.get(c);
@@ -946,21 +948,22 @@ function animateGridClose(closingEl, done) {
       if (dx || dy) {
         c.style.transition = 'none';
         c.style.transform = `translate(${dx}px, ${dy}px)`;
+        moved.push(c);
       }
     });
 
-    requestAnimationFrame(() => {
-      others.forEach(c => {
-        if (c.style.transform) {
-          c.style.transition = 'transform 260ms cubic-bezier(0.22, 1, 0.36, 1)';
-          c.style.transform = '';
-        }
-      });
+    // Force a reflow so the inverted positions are committed to the render tree.
+    void scroll.offsetWidth;
+
+    // PLAY: clear the offset with a transition → cards glide to their new spots.
+    moved.forEach(c => {
+      c.style.transition = 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)';
+      c.style.transform = '';
     });
 
     if (done) done();                 // actually close the tab now
-    setTimeout(() => { gridAnimating = false; }, 280);
-  }, 170);
+    setTimeout(() => { gridAnimating = false; }, 340);
+  }, 180);
 }
 
 function closeGridTabs(ids) {

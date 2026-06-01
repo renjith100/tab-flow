@@ -793,7 +793,7 @@ html[data-view="coverflow"] .select-bar { display: none !important; }
 
 /* ── GRID CARD CLOSE (poof out) ── */
 .grid-card.gc-closing {
-  transform: scale(0.55);
+  transform: scale(0.4);
   opacity: 0;
-  transition: transform .17s ease, opacity .17s ease;
+  transition: transform .18s cubic-bezier(0.4, 0, 1, 1), opacity .18s ease;
 }
