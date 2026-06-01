@@ -53,29 +53,6 @@ test('duplicateGroups returns only 2+ groups, keeper first', () => {
   assert.strictEqual(groups[0].tabs[1].id, 1);
 });
 
-test('buildGridSections: group sections first, then per-window Other tabs', () => {
-  const now = 100 * T.STALE_MS;
-  const tabs = [
-    { id: 1, windowId: 10, groupId: 5,  title: 'A', domain: 'a.com', url: 'https://a.com', favIconUrl: '', audible: false, lastAccessed: now },
-    { id: 2, windowId: 10, groupId: -1, title: 'B', domain: 'b.com', url: 'https://b.com', favIconUrl: '', audible: false, lastAccessed: now - T.STALE_MS - 1 },
-    { id: 3, windowId: 11, groupId: -1, title: 'C', domain: 'c.com', url: 'https://c.com', favIconUrl: '', audible: false, lastAccessed: now },
-  ];
-  const groups = [{ id: 5, title: 'Work', color: 'blue', windowId: 10 }];
-  const sections = T.buildGridSections(tabs, groups, now);
-
-  assert.strictEqual(sections.length, 3);
-  assert.strictEqual(sections[0].kind, 'group');
-  assert.strictEqual(sections[0].label, 'Work');
-  assert.strictEqual(sections[0].color, 'blue');
-  assert.strictEqual(sections[0].count, 1);
-  assert.strictEqual(sections[1].kind, 'window');
-  assert.strictEqual(sections[2].kind, 'window');
-  // stale flag flows onto the card
-  const cardB = sections[1].cards[0];
-  assert.strictEqual(cardB.id, 2);
-  assert.strictEqual(cardB.stale, true);
-});
-
 test('relativeAge formats buckets', () => {
   const now = 1_000_000_000_000;
   const ago = ms => now - ms;
@@ -111,33 +88,14 @@ test('toCard carries lastAccessed and ageLabel', () => {
   assert.strictEqual(card.ageLabel, '2 h');
 });
 
-test('buildGridSections ungroupedBy=domain keeps groups, clusters rest by domain', () => {
+test('toCard handles null lastAccessed (unknown) as not-stale, no age', () => {
   const now = 100 * T.STALE_MS;
-  const tabs = [
-    { id: 1, windowId: 10, groupId: 5,  title: 'A', domain: 'a.com', url: 'https://a.com', favIconUrl: '', audible: false, lastAccessed: now },
-    { id: 2, windowId: 10, groupId: -1, title: 'B', domain: 'b.com', url: 'https://b.com/1', favIconUrl: '', audible: false, lastAccessed: now },
-    { id: 3, windowId: 11, groupId: -1, title: 'C', domain: 'b.com', url: 'https://b.com/2', favIconUrl: '', audible: false, lastAccessed: now },
-  ];
-  const groups = [{ id: 5, title: 'Work', color: 'blue', windowId: 10 }];
-  const sections = T.buildGridSections(tabs, groups, now, { ungroupedBy: 'domain' });
-
-  assert.strictEqual(sections[0].kind, 'group');
-  const domainSec = sections.find(s => s.kind === 'domain');
-  assert.ok(domainSec);
-  assert.strictEqual(domainSec.label, 'b.com');
-  assert.strictEqual(domainSec.count, 2);
-});
-
-test('buildGridSections sorts section cards by opts.sort', () => {
-  const now = 100 * T.STALE_MS;
-  const tabs = [
-    { id: 1, windowId: 10, groupId: -1, title: 'Z', domain: 'a.com', url: 'https://a.com/z', favIconUrl: '', audible: false, lastAccessed: 10 },
-    { id: 2, windowId: 10, groupId: -1, title: 'A', domain: 'a.com', url: 'https://a.com/a', favIconUrl: '', audible: false, lastAccessed: 99 },
-  ];
-  const recent = T.buildGridSections(tabs, [], now, { sort: 'recent' });
-  assert.deepStrictEqual(recent[0].cards.map(c => c.id), [2, 1]);
-  const byName = T.buildGridSections(tabs, [], now, { sort: 'name' });
-  assert.deepStrictEqual(byName[0].cards.map(c => c.id), [2, 1]);
+  const card = T.toCard(
+    { id: 9, windowId: 1, title: 'U', domain: 'u.com', url: 'https://u.com',
+      favIconUrl: '', audible: false, groupId: -1, lastAccessed: null }, now);
+  assert.strictEqual(card.stale, false);
+  assert.strictEqual(card.ageLabel, '');
+  assert.strictEqual(card.freshness, 0);
 });
 
 test('freshness: 1 when new, 0 at/after 7d, linear between', () => {
@@ -149,57 +107,94 @@ test('freshness: 1 when new, 0 at/after 7d, linear between', () => {
   assert.strictEqual(T.freshness(now - T.STALE_MS / 2, now), 0.5);
 });
 
-test('toCard handles null lastAccessed (unknown) as not-stale, no age', () => {
+test('buildGridRows window mode: header, ungrouped first, then groups', () => {
   const now = 100 * T.STALE_MS;
-  const card = T.toCard(
-    { id: 9, windowId: 1, title: 'U', domain: 'u.com', url: 'https://u.com',
-      favIconUrl: '', audible: false, groupId: -1, lastAccessed: null }, now);
-  assert.strictEqual(card.stale, false);
-  assert.strictEqual(card.ageLabel, '');
-  assert.strictEqual(card.freshness, 0);
+  const tabs = [
+    { id: 1, windowId: 10, groupId: 5,  title: 'G', domain: 'a.com', url: 'https://a.com', favIconUrl: '', audible: false, lastAccessed: now },
+    { id: 2, windowId: 10, groupId: -1, title: 'U', domain: 'b.com', url: 'https://b.com', favIconUrl: '', audible: false, lastAccessed: now },
+  ];
+  const groups = [{ id: 5, title: 'Work', color: 'blue', windowId: 10 }];
+  const rows = T.buildGridRows(tabs, groups, now, { currentWindowId: 10 });
+
+  assert.strictEqual(rows[0].kind, 'window-header');
+  assert.strictEqual(rows[0].label, 'This window');
+  assert.strictEqual(rows[0].tabCount, 2);
+  assert.strictEqual(rows[1].kind, 'ungrouped');
+  assert.strictEqual(rows[1].label, 'Ungrouped');
+  assert.strictEqual(rows[2].kind, 'group');
+  assert.strictEqual(rows[2].label, 'Work (tab group)');
+  assert.strictEqual(rows[2].color, 'blue');
 });
 
-test('buildGridSections pins current window first, labels This/Other window', () => {
+test('buildGridRows pins current window first; This/Other window labels', () => {
   const now = 100 * T.STALE_MS;
   const tabs = [
     { id: 1, windowId: 10, groupId: -1, title: 'A', domain: 'a.com', url: 'https://a.com', favIconUrl: '', audible: false, lastAccessed: now },
     { id: 2, windowId: 11, groupId: -1, title: 'B', domain: 'b.com', url: 'https://b.com', favIconUrl: '', audible: false, lastAccessed: now },
   ];
-  const secs = T.buildGridSections(tabs, [], now, { currentWindowId: 11 });
-  assert.strictEqual(secs[0].windowId, 11);          // current pinned to top
-  assert.strictEqual(secs[0].label, 'This window');
-  assert.strictEqual(secs[1].label, 'Other window');
+  const rows = T.buildGridRows(tabs, [], now, { currentWindowId: 11 });
+  const headers = rows.filter(r => r.kind === 'window-header');
+  assert.deepStrictEqual(headers.map(h => h.label), ['This window', 'Other window']);
+  assert.strictEqual(headers[0].windowId, 11); // current pinned first
 });
 
-test('buildGridSections numbers multiple other windows', () => {
+test('buildGridRows numbers multiple other windows', () => {
   const now = 100 * T.STALE_MS;
   const tabs = [
     { id: 1, windowId: 10, groupId: -1, title: 'A', domain: 'a.com', url: 'https://a.com', favIconUrl: '', audible: false, lastAccessed: now },
     { id: 2, windowId: 11, groupId: -1, title: 'B', domain: 'b.com', url: 'https://b.com', favIconUrl: '', audible: false, lastAccessed: now },
     { id: 3, windowId: 12, groupId: -1, title: 'C', domain: 'c.com', url: 'https://c.com', favIconUrl: '', audible: false, lastAccessed: now },
   ];
-  const secs = T.buildGridSections(tabs, [], now, { currentWindowId: 12 });
-  assert.strictEqual(secs[0].label, 'This window');                 // win 12 pinned
-  assert.deepStrictEqual([secs[1].label, secs[2].label], ['Other window 1', 'Other window 2']);
+  const rows = T.buildGridRows(tabs, [], now, { currentWindowId: 12 });
+  const headers = rows.filter(r => r.kind === 'window-header');
+  assert.deepStrictEqual(headers.map(h => h.label), ['This window', 'Other window 1', 'Other window 2']);
 });
 
-test('buildGridSections pins current window above other-window groups', () => {
+test('buildGridRows omits Ungrouped row when a window has only grouped tabs', () => {
   const now = 100 * T.STALE_MS;
   const tabs = [
-    { id: 1, windowId: 10, groupId: 5,  title: 'G', domain: 'a.com', url: 'https://a.com', favIconUrl: '', audible: false, lastAccessed: now },
-    { id: 2, windowId: 11, groupId: -1, title: 'B', domain: 'b.com', url: 'https://b.com', favIconUrl: '', audible: false, lastAccessed: now },
+    { id: 1, windowId: 10, groupId: 5, title: 'G', domain: 'a.com', url: 'https://a.com', favIconUrl: '', audible: false, lastAccessed: now },
   ];
   const groups = [{ id: 5, title: 'Work', color: 'blue', windowId: 10 }];
-  const secs = T.buildGridSections(tabs, groups, now, { currentWindowId: 11 });
-  assert.strictEqual(secs[0].windowId, 11);   // current window's section first
-  assert.strictEqual(secs[1].kind, 'group');  // other window's group after
+  const rows = T.buildGridRows(tabs, groups, now, { currentWindowId: 10 });
+  assert.deepStrictEqual(rows.map(r => r.kind), ['window-header', 'group']);
 });
 
-test('buildGridSections keeps "Other tabs" for a single window', () => {
+test('buildGridRows single window still shows the header', () => {
   const now = 100 * T.STALE_MS;
   const tabs = [
     { id: 1, windowId: 10, groupId: -1, title: 'A', domain: 'a.com', url: 'https://a.com', favIconUrl: '', audible: false, lastAccessed: now },
   ];
-  const secs = T.buildGridSections(tabs, [], now, { currentWindowId: 10 });
-  assert.strictEqual(secs[0].label, 'Other tabs');
+  const rows = T.buildGridRows(tabs, [], now, { currentWindowId: 10 });
+  assert.strictEqual(rows[0].kind, 'window-header');
+  assert.strictEqual(rows[0].label, 'This window');
+  assert.strictEqual(rows[1].kind, 'ungrouped');
+});
+
+test('buildGridRows domain mode: flat, no window headers, groups labeled', () => {
+  const now = 100 * T.STALE_MS;
+  const tabs = [
+    { id: 1, windowId: 10, groupId: 5,  title: 'G', domain: 'a.com', url: 'https://a.com',   favIconUrl: '', audible: false, lastAccessed: now },
+    { id: 2, windowId: 10, groupId: -1, title: 'B', domain: 'b.com', url: 'https://b.com/1', favIconUrl: '', audible: false, lastAccessed: now },
+    { id: 3, windowId: 11, groupId: -1, title: 'C', domain: 'b.com', url: 'https://b.com/2', favIconUrl: '', audible: false, lastAccessed: now },
+  ];
+  const groups = [{ id: 5, title: 'Work', color: 'blue', windowId: 10 }];
+  const rows = T.buildGridRows(tabs, groups, now, { ungroupedBy: 'domain' });
+  assert.strictEqual(rows.some(r => r.kind === 'window-header'), false);
+  assert.strictEqual(rows[0].kind, 'group');
+  assert.strictEqual(rows[0].label, 'Work (tab group)');
+  const dom = rows.find(r => r.kind === 'domain');
+  assert.strictEqual(dom.label, 'b.com');
+  assert.strictEqual(dom.count, 2);
+});
+
+test('buildGridRows sorts a section by opts.sort', () => {
+  const now = 100 * T.STALE_MS;
+  const tabs = [
+    { id: 1, windowId: 10, groupId: -1, title: 'Z', domain: 'a.com', url: 'https://a.com/z', favIconUrl: '', audible: false, lastAccessed: 10 },
+    { id: 2, windowId: 10, groupId: -1, title: 'A', domain: 'a.com', url: 'https://a.com/a', favIconUrl: '', audible: false, lastAccessed: 99 },
+  ];
+  const recent = T.buildGridRows(tabs, [], now, { currentWindowId: 10, sort: 'recent' });
+  const ung = recent.find(r => r.kind === 'ungrouped');
+  assert.deepStrictEqual(ung.cards.map(c => c.id), [2, 1]);
 });
