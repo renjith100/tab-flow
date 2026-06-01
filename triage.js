@@ -115,17 +115,13 @@ function toCard(t, now) {
 // Turn the flat tab list + Chrome groups into ordered sections:
 // every Chrome tab group first (in first-seen order), then one
 // "Other tabs" section per window for ungrouped tabs (in first-seen order).
-// opts: { ungroupedBy: 'window'|'domain', sort: 'recent'|'oldest'|'name',
-//         currentWindowId? }.
+// opts: { ungroupedBy: 'window'|'domain', sort: 'recent'|'oldest'|'name' }.
 // Chrome groups always become group sections first (in first-seen order).
-// Ungrouped tabs go into per-window sections, or per-domain sections when
-// ungroupedBy==='domain'. A lone window section is labeled "Other tabs"; with
-// multiple windows they're labeled "Window 1/2/…" (the current one marked).
-// Each section's cards are sorted.
+// Ungrouped tabs go into per-window "Other tabs" sections, or per-domain
+// sections when ungroupedBy==='domain'. Each section's cards are sorted.
 function buildGridSections(tabs, groups, now, opts = {}) {
   const ungroupedBy = opts.ungroupedBy || 'window';
   const sort = opts.sort || 'recent';
-  const currentWindowId = opts.currentWindowId;
   const groupMap = new Map(groups.map(g => [g.id, g]));
   const groupSections = new Map();  // groupId -> section
   const otherSections = new Map();  // windowId or domain key -> section
@@ -155,23 +151,11 @@ function buildGridSections(tabs, groups, now, opts = {}) {
       const key = `window-${t.windowId}`;
       if (!otherSections.has(key)) {
         otherSections.set(key, {
-          id: key, kind: 'window', label: 'Other tabs', color: null,
-          windowId: t.windowId, cards: [],
+          id: key, kind: 'window', label: 'Other tabs', color: null, cards: [],
         });
       }
       otherSections.get(key).cards.push(card);
     }
-  }
-
-  // Disambiguate multiple windows: "Other tabs" → "Window 1/2/…" (mark current).
-  const winSecs = [...otherSections.values()].filter(s => s.kind === 'window');
-  if (winSecs.length > 1) {
-    winSecs.forEach((s, i) => {
-      s.label = `Window ${i + 1}`;
-      if (currentWindowId != null && s.windowId === currentWindowId) {
-        s.label += ' (current)';
-      }
-    });
   }
 
   const sections = [...groupSections.values(), ...otherSections.values()];

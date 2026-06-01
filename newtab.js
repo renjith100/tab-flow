@@ -858,7 +858,7 @@ async function renderGridView() {
         t.title.toLowerCase().includes(q) || t.domain.toLowerCase().includes(q))
     : gridTabs;
   const sections = buildGridSections(shown, groups, now, {
-    ungroupedBy: gridGroupBy, sort: gridSort, currentWindowId,
+    ungroupedBy: gridGroupBy, sort: gridSort,
   });
 
   const ctx = {
