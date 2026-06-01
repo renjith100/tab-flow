@@ -668,6 +668,7 @@ html[data-view="coverflow"] .grid-scroll { display: none; }
 .grid-card.is-stale { opacity: .82; }
 
 .grid-card-image {
+  position: relative;
   height: 132px; width: 100%; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
 }
@@ -743,12 +744,12 @@ html[data-view="coverflow"] .select-bar { display: none !important; }
 
 /* ── CARD RELATIVE-AGE PILL (top-left, over the image) ── */
 .gc-age-pill {
-  position: absolute; top: 8px; left: 8px; z-index: 2;
-  padding: 3px 9px; border-radius: 11px;
-  background: rgba(0, 0, 0, .5); backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, .12);
-  color: rgba(255, 255, 255, .9);
-  font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+  position: absolute; right: 9px; bottom: 9px; z-index: 2;
+  padding: 5px 12px; border-radius: 13px;
+  background: rgba(0, 0, 0, .55); backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, .14);
+  color: rgba(255, 255, 255, .92);
+  font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
   letter-spacing: .02em; line-height: 1;
 }
 .gc-age-pill.is-stale-age {

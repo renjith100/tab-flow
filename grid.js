@@ -50,7 +50,14 @@ function buildGridCard(card, ctx) {
   if (card.stale) el.classList.add('is-stale');
   if (ctx.isSelected(card.id)) el.classList.add('is-selected');
 
-  el.appendChild(buildCardBanner(card));
+  const banner = buildCardBanner(card);
+  if (card.ageLabel) {
+    const pill = document.createElement('div');
+    pill.className = card.stale ? 'gc-age-pill is-stale-age' : 'gc-age-pill';
+    pill.textContent = card.stale ? `⏳ ${card.ageLabel}` : card.ageLabel;
+    banner.appendChild(pill);
+  }
+  el.appendChild(banner);
 
   const close = document.createElement('button');
   close.className = 'gc-close';
@@ -58,13 +65,6 @@ function buildGridCard(card, ctx) {
   close.title = 'Close tab';
   close.addEventListener('click', ev => { ev.stopPropagation(); ctx.onClose(card.id); });
   el.appendChild(close);
-
-  if (card.ageLabel) {
-    const pill = document.createElement('div');
-    pill.className = card.stale ? 'gc-age-pill is-stale-age' : 'gc-age-pill';
-    pill.textContent = card.stale ? `⏳ ${card.ageLabel}` : card.ageLabel;
-    el.appendChild(pill);
-  }
 
   const body = document.createElement('div');
   body.className = 'gc-body';
