@@ -696,3 +696,18 @@ html[data-view="coverflow"] .grid-scroll { display: none; }
 .ov-chip.chip-danger { background: rgba(239,68,68,.14); border-color: rgba(239,68,68,.4); color: #fca5a5; }
 .ov-chip.chip-warn   { background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.4); color: #fbbf24; }
 .ov-chip:hover { filter: brightness(1.15); }
+
+/* ── SELECTION BAR ── */
+.select-bar {
+  display: none; align-items: center; gap: 12px;
+  width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 28px 6px;
+  font-size: 12px; color: rgba(255,255,255,.7);
+}
+.select-bar.show { display: flex; }
+.sb-close, .sb-clear {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600;
+  border-radius: 8px; padding: 5px 11px; cursor: pointer;
+}
+.sb-close { background: rgba(239,68,68,.16); border: 1px solid rgba(239,68,68,.4); color: #fca5a5; }
+.sb-clear { background: transparent; border: 1px solid rgba(255,255,255,.12); color: var(--text-dim); }
+html[data-view="coverflow"] .select-bar { display: none !important; }

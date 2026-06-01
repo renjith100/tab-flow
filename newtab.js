@@ -509,6 +509,19 @@ function hideUndoToast() {
 
 async function undoClose() {
   hideUndoToast();
+
+  // Grid mode: a close may have removed many tabs. Restore the most-recently
+  // closed session that many times (no sessionId = restore most recent).
+  if (currentView === 'grid') {
+    const times = Math.max(1, lastGridClosedCount);
+    lastGridClosedCount = 0;
+    for (let i = 0; i < times; i++) {
+      await new Promise(res => chrome.sessions.restore(undefined, () => res()));
+    }
+    renderCurrentView();
+    return;
+  }
+
   const sessions = await new Promise(r =>
     chrome.sessions.getRecentlyClosed({ maxResults: 1 }, r)
   );
@@ -792,16 +805,38 @@ function focusTab(tabId) {
   if (tab) chrome.windows.update(tab.windowId, { focused: true });
 }
 
-// Single close from the grid (Task 6 adds undo).
+// Remember how many tabs the last grid close removed, so undo can restore them.
+let lastGridClosedCount = 0;
+
 function closeGridTab(tabId) {
-  chrome.tabs.remove(tabId);
+  lastGridClosedCount = 1;
+  chrome.tabs.remove(tabId, () => {
+    gridSelection.delete(tabId);
+    showUndoToast('Closed 1 tab');
+  });
 }
 
-// Placeholders wired fully in Task 5/6.
-function closeGridTabs(ids) { chrome.tabs.remove(ids); }
+function closeGridTabs(ids) {
+  if (!ids.length) return;
+  lastGridClosedCount = ids.length;
+  chrome.tabs.remove(ids, () => {
+    ids.forEach(id => gridSelection.delete(id));
+    showUndoToast(`Closed ${ids.length} tabs`);
+  });
+}
+
 function toggleGridSelect(id) {
   if (gridSelection.has(id)) gridSelection.delete(id); else gridSelection.add(id);
+  updateSelectBar();
+  // Re-render to reflect selected outlines.
   renderCurrentView();
+}
+
+function updateSelectBar() {
+  const bar = document.getElementById('selectBar');
+  const n = gridSelection.size;
+  bar.classList.toggle('show', n > 0);
+  document.getElementById('selectCount').textContent = `${n} selected`;
 }
 // Render the count line (tone-escalating) and triage chips.
 function updateOverviewHeader(tabs, now) {
@@ -856,6 +891,15 @@ function renderCurrentView() {
 document.getElementById('viewToggle').addEventListener('click', e => {
   const btn = e.target.closest('.vt-btn');
   if (btn) setView(btn.dataset.mode);
+});
+
+document.getElementById('selClose').addEventListener('click', () => {
+  closeGridTabs([...gridSelection]);
+});
+document.getElementById('selClear').addEventListener('click', () => {
+  gridSelection.clear();
+  updateSelectBar();
+  renderCurrentView();
 });
 
 async function init() {
