@@ -17,3 +17,37 @@ chrome.action.onClicked.addListener(async () => {
     await chrome.tabs.create({ url });
   }
 });
+
+// ── Toolbar tab-count badge ───────────────────────────────────────────────────
+// Reuse countTone() from triage.js (defines globals in the worker scope).
+importScripts('triage.js');
+
+const TONE_COLORS = { calm: '#3f3f46', warn: '#f59e0b', alert: '#ef4444' };
+
+async function updateBadge() {
+  try {
+    const selfUrl = chrome.runtime.getURL(NEWTAB_URL);
+    const tabs = await chrome.tabs.query({});
+    const n = tabs.filter(t => t.url !== selfUrl).length;
+
+    await chrome.action.setBadgeText({ text: n > 0 ? String(n) : '' });
+    await chrome.action.setBadgeBackgroundColor({ color: TONE_COLORS[countTone(n)] });
+  } catch (err) {
+    // Chrome APIs can reject transiently (e.g. during worker teardown);
+    // log instead of leaving an unhandled rejection.
+    console.error('TabFlow: updateBadge failed', err);
+  }
+}
+
+chrome.runtime.onStartup.addListener(updateBadge);
+chrome.runtime.onInstalled.addListener(updateBadge);
+chrome.tabs.onCreated.addListener(updateBadge);
+chrome.tabs.onRemoved.addListener(updateBadge);
+chrome.tabs.onAttached.addListener(updateBadge);
+chrome.tabs.onDetached.addListener(updateBadge);
+chrome.tabs.onUpdated.addListener((_id, changeInfo) => {
+  if ('url' in changeInfo) updateBadge();
+});
+
+// Initial paint when the service worker first loads.
+updateBadge();

@@ -7,15 +7,16 @@ const SELF_URL = chrome.runtime.getURL('newtab.html');
 // Converts a raw Chrome tab object into our internal tab item shape.
 function chromeTabToTabItem(chromeTab) {
   return {
-    type:       'tab',
-    id:         chromeTab.id,
-    windowId:   chromeTab.windowId,
-    title:      chromeTab.title || 'New Tab',
-    domain:     getDomain(chromeTab.url),
-    url:        chromeTab.url || '',
-    favIconUrl: chromeTab.favIconUrl || '',
-    groupId:    chromeTab.groupId,
-    audible:    chromeTab.audible || false,
+    type:         'tab',
+    id:           chromeTab.id,
+    windowId:     chromeTab.windowId,
+    title:        chromeTab.title || 'New Tab',
+    domain:       getDomain(chromeTab.url),
+    url:          chromeTab.url || '',
+    favIconUrl:   chromeTab.favIconUrl || '',
+    groupId:      chromeTab.groupId,
+    audible:      chromeTab.audible || false,
+    lastAccessed: chromeTab.lastAccessed ?? null,
   };
 }
 

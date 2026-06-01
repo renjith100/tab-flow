@@ -10,6 +10,19 @@ let currentWindowId = null;    // id of the window TabFlow is running in
 let isAnimatingRemoval = false; // block new deletions while one is in progress
 let tabsClosing     = new Set(); // ids of tabs currently animating for removal
 
+// ── View mode (grid | coverflow), persisted in localStorage ───────────────────
+const VIEW_KEY = 'tabflow:view';
+let currentView = (localStorage.getItem(VIEW_KEY) === 'coverflow') ? 'coverflow' : 'grid';
+
+function setView(view) {
+  currentView = (view === 'coverflow') ? 'coverflow' : 'grid';
+  localStorage.setItem(VIEW_KEY, currentView);
+  document.documentElement.setAttribute('data-view', currentView);
+  document.querySelectorAll('.vt-btn').forEach(b =>
+    b.classList.toggle('is-active', b.dataset.mode === currentView));
+  renderCurrentView();
+}
+
 function releaseGuards(tabId) {
   tabsClosing.delete(tabId);
   isAnimatingRemoval = false;
@@ -214,6 +227,31 @@ function buildCards() {
       card.appendChild(titleEl);
       card.appendChild(domainEl);
 
+      // Relative-age pill (shared with the grid)
+      const now = Date.now();
+      const pill = makeAgePill({
+        ageLabel:  relativeAge(t.lastAccessed, now),
+        freshness: freshness(t.lastAccessed, now),
+        stale:     isStale(t, now),
+      });
+      if (pill) card.appendChild(pill);
+
+      // Hover close button
+      const close = document.createElement('button');
+      close.className = 'gc-close';
+      close.textContent = '×';
+      close.title = 'Close tab';
+      close.addEventListener('mousedown', ev => ev.stopPropagation());
+      close.addEventListener('touchstart', ev => ev.stopPropagation(), { passive: true });
+      close.addEventListener('click', ev => {
+        ev.stopPropagation();
+        if (isAnimatingRemoval || tabsClosing.has(t.id)) return;
+        // Reuse the carousel's poof-close animation (handles removal + undo toast).
+        drag.base = getPos(i - active);
+        poofClose(i, card, 0, 0);
+      });
+      card.appendChild(close);
+
       // Drag-to-close only on tab cards
       card.addEventListener('mousedown',  e => initDrag(e, i));
       card.addEventListener('touchstart', e => initDrag(e, i), { passive: false });
@@ -324,8 +362,8 @@ function openTab() {
 
   // Brief flash, then switch — feels intentional rather than instant
   setTimeout(() => {
-    chrome.tabs.update(tab.id, { active: true });
-    chrome.windows.update(tab.windowId, { focused: true });
+    Promise.resolve(chrome.tabs.update(tab.id, { active: true })).catch(() => {});
+    Promise.resolve(chrome.windows.update(tab.windowId, { focused: true })).catch(() => {});
   }, 160);
 }
 
@@ -435,7 +473,7 @@ function closeActiveTab() {
     const cardEl = cardEls[currentIdx];
 
     removeTabFromModels(item, currentIdx);
-    chrome.tabs.remove(item.id);
+    Promise.resolve(chrome.tabs.remove(item.id)).catch(() => {});
     showUndoToast(item.title);
 
     if (exitGroupIfEmpty(item.id)) return;
@@ -496,6 +534,19 @@ function hideUndoToast() {
 
 async function undoClose() {
   hideUndoToast();
+
+  // Grid mode: a close may have removed many tabs. Restore the most-recently
+  // closed session that many times (no sessionId = restore most recent).
+  if (currentView === 'grid') {
+    const times = Math.max(1, lastGridClosedCount);
+    lastGridClosedCount = 0;
+    for (let i = 0; i < times; i++) {
+      await new Promise(res => chrome.sessions.restore(undefined, () => res()));
+    }
+    renderCurrentView();
+    return;
+  }
+
   const sessions = await new Promise(r =>
     chrome.sessions.getRecentlyClosed({ maxResults: 1 }, r)
   );
@@ -513,6 +564,46 @@ toastUndo.addEventListener('click', undoClose);
 // ── Keyboard ──────────────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   const inSearch = document.activeElement === searchEl;
+
+  // ── Grid-mode keyboard ──
+  if (currentView === 'grid') {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); undoClose(); return; }
+
+    // While typing in search, don't hijack keys (Escape blurs back to the grid).
+    if (inSearch) {
+      if (e.key === 'Escape') searchEl.blur();
+      return;
+    }
+
+    if (e.key === '/') { e.preventDefault(); searchEl.focus(); return; }
+
+    const cards = [...document.querySelectorAll('.grid-card')];
+    if (!cards.length) return;
+    let idx = cards.findIndex(c => c.classList.contains('kb-focus'));
+    const cols = gridColumnCount();
+
+    switch (e.key) {
+      case 'ArrowRight': idx = Math.min(cards.length - 1, (idx < 0 ? 0 : idx + 1)); break;
+      case 'ArrowLeft':  idx = Math.max(0, (idx < 0 ? 0 : idx - 1)); break;
+      case 'ArrowDown':  idx = Math.min(cards.length - 1, (idx < 0 ? 0 : idx + cols)); break;
+      case 'ArrowUp':    idx = Math.max(0, (idx < 0 ? 0 : idx - cols)); break;
+      case 'Enter': if (idx >= 0) cards[idx].click(); return;
+      case 'Backspace':
+      case 'Delete':
+        if (idx >= 0) {
+          e.preventDefault();
+          const id = Number(cards[idx].dataset.tabId);
+          closeGridTab(id);
+        }
+        return;
+      default: return; // let other keys (typing) pass through
+    }
+    e.preventDefault();
+    cards.forEach(c => c.classList.remove('kb-focus'));
+    cards[idx].classList.add('kb-focus');
+    cards[idx].scrollIntoView({ block: 'nearest' });
+    return;
+  }
 
   if (inSearch) {
     if (e.key === 'Enter')           { searchEl.blur(); openTab(); return; }
@@ -570,7 +661,10 @@ let searchTimer = null;
 searchEl.addEventListener('input', e => {
   const value = e.target.value;
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => applyFilter(value), 150);
+  searchTimer = setTimeout(() => {
+    if (currentView === 'grid') renderGridView();
+    else applyFilter(value);
+  }, 150);
 });
 
 // ── Trackpad / mouse-wheel ────────────────────────────────────────────────────
@@ -710,7 +804,7 @@ function poofClose(idx, card, dx, dy) {
     removeTabFromModels(tab, currentIdx);
 
     // Actually close the Chrome tab
-    chrome.tabs.remove(tab.id);
+    Promise.resolve(chrome.tabs.remove(tab.id)).catch(() => {});
     showUndoToast(tab.title);
 
     if (exitGroupIfEmpty(tab.id)) return;
@@ -740,6 +834,281 @@ document.addEventListener('touchmove', moveDrag, { passive: false });
 document.addEventListener('touchend',  endDrag);
 
 // ── Init: load real Chrome tabs + tab groups ──────────────────────────────────
+// Selection state for multi-select (Task 6 wires bulk actions to it).
+let gridSelection = new Set();
+
+// Loaded tab list backing the grid (all windows).
+let gridTabs = [];
+
+// True while a grid close animation is running — defers the live-sync rebuild.
+let gridAnimating = false;
+
+// Grid organization prefs (persisted).
+let gridGroupBy = localStorage.getItem('tabflow:groupBy') || 'window'; // 'window'|'domain'
+let gridSort    = localStorage.getItem('tabflow:sort')    || 'recent'; // 'recent'|'oldest'|'name'
+
+function applyControlState() {
+  document.querySelectorAll('.ovg-btn').forEach(b =>
+    b.classList.toggle('is-active', b.dataset.group === gridGroupBy));
+  const sortSel = document.getElementById('ovSort');
+  if (sortSel) sortSel.value = gridSort;
+}
+
+async function renderGridView() {
+  const [chromeTabs, groups] = await Promise.all([
+    new Promise(r => chrome.tabs.query({}, r)),
+    new Promise(r => chrome.tabGroups.query({}, r)),
+  ]);
+
+  const selfUrl = chrome.runtime.getURL('newtab.html');
+  gridTabs = chromeTabs
+    .filter(t => t.url !== selfUrl)
+    .map(chromeTabToTabItem);
+
+  const now = Date.now();
+
+  // Apply the search query to the cards shown (count + chips still cover all tabs).
+  const q = searchEl.value.toLowerCase().trim();
+  const shown = q
+    ? gridTabs.filter(t =>
+        t.title.toLowerCase().includes(q) || t.domain.toLowerCase().includes(q))
+    : gridTabs;
+  const sections = buildGridSections(shown, groups, now, {
+    ungroupedBy: gridGroupBy, sort: gridSort,
+  });
+
+  const ctx = {
+    onOpen:         id => focusTab(id),
+    onClose:        id => closeGridTab(id),
+    onCloseMany:    ids => closeGridTabs(ids),
+    onToggleSelect: id => toggleGridSelect(id),
+    isSelected:     id => gridSelection.has(id),
+  };
+
+  renderGrid(document.getElementById('gridScroll'), sections, ctx);
+  updateOverviewHeader(gridTabs, now);
+  applyControlState();
+}
+
+// Number of columns currently rendered in a flow (for up/down navigation).
+function gridColumnCount() {
+  const flow = document.querySelector('.grid-flow');
+  if (!flow) return 1;
+  const styles = getComputedStyle(flow);
+  return styles.gridTemplateColumns.split(' ').length;
+}
+
+// Activate a tab (and focus its window) from the grid.
+function focusTab(tabId) {
+  const tab = gridTabs.find(t => t.id === tabId);
+  // Tab may already be gone (stale card) — swallow the resulting rejection.
+  Promise.resolve(chrome.tabs.update(tabId, { active: true })).catch(() => renderCurrentView());
+  if (tab) Promise.resolve(chrome.windows.update(tab.windowId, { focused: true })).catch(() => {});
+}
+
+// Remember how many tabs the last grid close removed, so undo can restore them.
+let lastGridClosedCount = 0;
+
+function closeGridTab(tabId) {
+  const scroll = document.getElementById('gridScroll');
+  const closingEl = scroll && scroll.querySelector(`.grid-card[data-tab-id="${tabId}"]`);
+  const remove = () => {
+    lastGridClosedCount = 1;
+    chrome.tabs.remove(tabId, () => {
+      void chrome.runtime.lastError; // ignore "no tab" if already gone
+      gridSelection.delete(tabId);
+      showUndoToast('1 tab');
+    });
+  };
+  if (closingEl) animateGridClose(closingEl, remove);
+  else remove();
+}
+
+// Poof the closing card out, then FLIP the remaining cards into their new spots.
+function animateGridClose(closingEl, done) {
+  const scroll = document.getElementById('gridScroll');
+  const cards = [...scroll.querySelectorAll('.grid-card')];
+  const first = new Map();
+  cards.forEach(c => first.set(c, c.getBoundingClientRect()));
+
+  gridAnimating = true;
+  closingEl.style.pointerEvents = 'none';
+  closingEl.classList.add('gc-closing');
+
+  // After the poof, collapse the closed card's space and animate the rest in.
+  setTimeout(() => {
+    closingEl.style.display = 'none';
+    const others = cards.filter(c => c !== closingEl);
+
+    // INVERT: jump each moved card back to its old position (no transition).
+    const moved = [];
+    others.forEach(c => {
+      const last = c.getBoundingClientRect();
+      const f = first.get(c);
+      const dx = f.left - last.left;
+      const dy = f.top - last.top;
+      if (dx || dy) {
+        c.style.transition = 'none';
+        c.style.transform = `translate(${dx}px, ${dy}px)`;
+        moved.push(c);
+      }
+    });
+
+    // Force a reflow so the inverted positions are committed to the render tree.
+    void scroll.offsetWidth;
+
+    // PLAY: clear the offset with a transition → cards glide to their new spots.
+    // Stagger by DOM order (cascades outward from the gap), capped so big grids
+    // stay snappy.
+    const STEP = 22, MAX_DELAY = 160, DUR = 300;
+    moved.forEach((c, i) => {
+      const delay = Math.min(i * STEP, MAX_DELAY);
+      c.style.transition = `transform ${DUR}ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms`;
+      c.style.transform = '';
+    });
+
+    const maxDelay = moved.length ? Math.min((moved.length - 1) * STEP, MAX_DELAY) : 0;
+    if (done) done();                 // actually close the tab now
+    setTimeout(() => { gridAnimating = false; }, DUR + maxDelay + 40);
+  }, 180);
+}
+
+function closeGridTabs(ids) {
+  if (!ids.length) return;
+  lastGridClosedCount = ids.length;
+  chrome.tabs.remove(ids, () => {
+    void chrome.runtime.lastError; // ignore "no tab" if any already gone
+    ids.forEach(id => gridSelection.delete(id));
+    showUndoToast(`${ids.length} tabs`);
+  });
+}
+
+function toggleGridSelect(id) {
+  if (gridSelection.has(id)) gridSelection.delete(id); else gridSelection.add(id);
+  updateSelectBar();
+  // Re-render to reflect selected outlines.
+  renderCurrentView();
+}
+
+function updateSelectBar() {
+  const bar = document.getElementById('selectBar');
+  const n = gridSelection.size;
+  bar.classList.toggle('show', n > 0);
+  document.getElementById('selectCount').textContent = `${n} selected`;
+}
+
+// Turn the current selection into a Chrome tab group (one group per window,
+// since a Chrome group can't span windows).
+async function groupSelected() {
+  const ids = [...gridSelection];
+  if (!ids.length) return;
+  const name = window.prompt('Name this group:', 'New group');
+  if (name === null) return; // cancelled
+
+  const byWindow = new Map();
+  for (const id of ids) {
+    const t = gridTabs.find(x => x.id === id);
+    if (!t) continue;
+    if (!byWindow.has(t.windowId)) byWindow.set(t.windowId, []);
+    byWindow.get(t.windowId).push(id);
+  }
+
+  for (const [, winIds] of byWindow) {
+    try {
+      const groupId = await new Promise((res, rej) =>
+        chrome.tabs.group({ tabIds: winIds }, gid => {
+          const err = chrome.runtime.lastError;
+          if (err) rej(err); else res(gid);
+        }));
+      await new Promise(res =>
+        chrome.tabGroups.update(groupId, { title: name || 'New group' }, () => res()));
+    } catch (_) {
+      // Skip tabs that can't be grouped (e.g. restricted) and continue.
+    }
+  }
+
+  gridSelection.clear();
+  updateSelectBar();
+  renderCurrentView();
+}
+// Render the count line (tone-escalating) and triage chips.
+function updateOverviewHeader(tabs, now) {
+  const countEl = document.getElementById('ovCount');
+  const chipsEl = document.getElementById('ovChips');
+  const n = tabs.length;
+
+  countEl.textContent = `${n} ${n === 1 ? 'tab' : 'tabs'} open`;
+  countEl.classList.remove('tone-warn', 'tone-alert');
+  const tone = countTone(n);
+  if (tone === 'warn')  countEl.classList.add('tone-warn');
+  if (tone === 'alert') countEl.classList.add('tone-alert');
+
+  chipsEl.innerHTML = '';
+
+  const stale = staleTabs(tabs, now);
+  if (stale.length) {
+    chipsEl.appendChild(makeChip(
+      `${stale.length} stale · Close all`, 'chip-danger',
+      () => closeGridTabs(stale.map(t => t.id))));
+  }
+
+  const dups = duplicateGroups(tabs);
+  if (dups.length) {
+    // Merge = close every duplicate except the keeper (first) in each group.
+    const toClose = dups.flatMap(g => g.tabs.slice(1).map(t => t.id));
+    chipsEl.appendChild(makeChip(
+      `${dups.length} duplicates · Merge`, 'chip-warn',
+      () => closeGridTabs(toClose)));
+  }
+}
+
+function makeChip(label, cls, onClick) {
+  const b = document.createElement('button');
+  b.className = `ov-chip ${cls}`;
+  b.textContent = label;
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+// Dispatch rendering to the active view. Grid loads all windows; Cover Flow
+// keeps its current-window behavior in buildCards()/updatePositions().
+function renderCurrentView() {
+  if (currentView === 'grid') {
+    renderGridView();
+  } else {
+    buildCards();
+  }
+}
+
+// Wire the toggle buttons once.
+document.getElementById('viewToggle').addEventListener('click', e => {
+  const btn = e.target.closest('.vt-btn');
+  if (btn) setView(btn.dataset.mode);
+});
+
+document.getElementById('selClose').addEventListener('click', () => {
+  closeGridTabs([...gridSelection]);
+});
+document.getElementById('selGroup').addEventListener('click', groupSelected);
+document.getElementById('selClear').addEventListener('click', () => {
+  gridSelection.clear();
+  updateSelectBar();
+  renderCurrentView();
+});
+
+document.getElementById('ovGroup').addEventListener('click', e => {
+  const btn = e.target.closest('.ovg-btn');
+  if (!btn) return;
+  gridGroupBy = btn.dataset.group;
+  localStorage.setItem('tabflow:groupBy', gridGroupBy);
+  renderCurrentView();
+});
+document.getElementById('ovSort').addEventListener('change', e => {
+  gridSort = e.target.value;
+  localStorage.setItem('tabflow:sort', gridSort);
+  renderCurrentView();
+});
+
 async function init() {
   const [allChromeTabs, activeTabs, allGroups] = await Promise.all([
     new Promise(r => chrome.tabs.query({ currentWindow: true }, r)),
@@ -777,11 +1146,26 @@ async function init() {
     active = midPoint;
   }
 
-  buildCards();
+  document.documentElement.setAttribute('data-view', currentView);
+  document.querySelectorAll('.vt-btn').forEach(b =>
+    b.classList.toggle('is-active', b.dataset.mode === currentView));
+  renderCurrentView();
 }
 
 // ── Live sync: re-fetch and rebuild when tabs change externally ────────────────
 async function reloadTabs() {
+  // In grid mode, just re-render the grid (it re-queries all windows itself).
+  if (currentView === 'grid') {
+    // Don't rebuild mid-animation — it would destroy the cards being animated.
+    if (gridAnimating) {
+      clearTimeout(reloadTimer);
+      reloadTimer = setTimeout(reloadTabs, 150);
+      return;
+    }
+    renderGridView();
+    return;
+  }
+
   // Don't rebuild while a close animation is running — buildCards() would destroy
   // the DOM element the rAF loop is writing to, making the animation invisible.
   // Defer until the animation completes (isAnimatingRemoval resets after ~880ms).

@@ -15,17 +15,43 @@
 </head>
 <body>
 
-  <div class="header">
+  <div class="header" id="topbar">
     <div class="logo">Tab<span class="v">Flow</span></div>
+    <div class="search-wrap">
+      <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input class="search" type="text" id="search" placeholder="Filter tabs…"
+             autocomplete="off" spellcheck="false">
+    </div>
+    <div class="view-toggle" id="viewToggle">
+      <button class="vt-btn" id="vtGrid" data-mode="grid" title="Overview grid">⊞ Grid</button>
+      <button class="vt-btn" id="vtFlow" data-mode="coverflow" title="Cover Flow">≋ Cover Flow</button>
+    </div>
   </div>
 
-  <div class="search-wrap">
-    <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
-         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-    </svg>
-    <input class="search" type="text" id="search" placeholder="Filter tabs…"
-           autocomplete="off" spellcheck="false">
+  <div class="overview-header" id="overviewHeader">
+    <div class="ov-count" id="ovCount">— tabs open</div>
+    <div class="ov-chips" id="ovChips"></div>
+    <div class="ov-controls">
+      <div class="ov-group" id="ovGroup">
+        <button class="ovg-btn" data-group="window">Window</button>
+        <button class="ovg-btn" data-group="domain">Domain</button>
+      </div>
+      <select class="ov-sort" id="ovSort" title="Sort tabs">
+        <option value="recent">Recent</option>
+        <option value="oldest">Oldest</option>
+        <option value="name">Name</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="select-bar" id="selectBar">
+    <span id="selectCount">0 selected</span>
+    <button class="sb-group" id="selGroup">Group these</button>
+    <button class="sb-close" id="selClose">Close selected</button>
+    <button class="sb-clear" id="selClear">Clear</button>
   </div>
 
   <div class="footer">
@@ -47,6 +73,8 @@
     <div class="empty" id="empty">No tabs match</div>
   </div>
 
+  <div class="grid-scroll" id="gridScroll"></div>
+
   <div class="detail" id="detail"></div>
 
   <div class="toast" id="toast">
@@ -55,6 +83,8 @@
   </div>
 
   <script src="models.js"></script>
+  <script src="triage.js"></script>
+  <script src="grid.js"></script>
   <script src="newtab.js"></script>
 </body>
 </html>

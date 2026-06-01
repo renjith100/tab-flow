@@ -548,3 +548,252 @@ body::before {
   85%  { transform: translateX(220px) translateY(-310px) rotateZ(7.5deg) scale(0.4);  opacity: 0.25; }
   100% { transform: translateX(315px) translateY(-332px) rotateZ(9deg)   scale(0.27); opacity: 0; }
 }
+
+/* ── PERSISTENT TOP BAR (both views) ── */
+:root { --topbar-h: 56px; }
+
+.header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  height: var(--topbar-h);
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 20px; margin: 0;
+  background: rgba(7, 7, 13, 0.82);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  animation: none;
+}
+.header .logo { font-size: 20px; flex-shrink: 0; }
+
+/* Search lives in the bar: flexible width, centered between logo and toggle. */
+.header .search-wrap {
+  position: relative; flex: 1; max-width: 460px; margin: 0 auto;
+}
+.header .search { width: 100%; height: 36px; }
+
+/* ── VIEW MODE SWITCHING ── */
+/* Grid: scrolls, top-aligned; content clears the fixed bar. */
+html[data-view="grid"], html[data-view="grid"] body {
+  height: auto;
+  min-height: 100vh;
+  width: 100vw;
+  overflow-y: auto;
+  display: block;
+}
+html[data-view="grid"] body { padding-top: var(--topbar-h); }
+
+/* Coverflow: stays centered, but pushed below the fixed bar. */
+html[data-view="coverflow"] body { padding-top: var(--topbar-h); }
+
+/* Coverflow-only elements hidden in grid mode */
+html[data-view="grid"] .stage-wrap,
+html[data-view="grid"] .detail,
+html[data-view="grid"] .footer { display: none; }
+
+/* Grid-only elements hidden in coverflow mode */
+html[data-view="coverflow"] .overview-header,
+html[data-view="coverflow"] .grid-scroll { display: none; }
+
+/* ── VIEW TOGGLE ── */
+.view-toggle {
+  display: flex; gap: 4px; flex-shrink: 0;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 12px; padding: 3px;
+}
+.vt-btn {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600;
+  color: var(--text-dim); background: transparent; border: none;
+  padding: 5px 11px; border-radius: 9px; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.vt-btn.is-active { background: var(--violet-soft); color: var(--violet); }
+.vt-btn:hover:not(.is-active) { color: var(--text); }
+
+/* ── OVERVIEW HEADER (grid mode) ── */
+.overview-header {
+  width: 100%; max-width: 1400px; margin: 0 auto;
+  padding: 8px 28px 14px; display: flex; align-items: center;
+  justify-content: space-between; gap: 16px; flex-wrap: wrap;
+}
+.ov-count {
+  font-family: 'Fraunces', serif; font-style: italic; font-size: 22px;
+  color: var(--text);
+}
+.ov-count.tone-warn  { color: #fbbf24; }
+.ov-count.tone-alert { color: #f87171; }
+.ov-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── GRID SCROLL CONTAINER ── */
+.grid-scroll {
+  width: 100%; max-width: 1400px; margin: 0 auto;
+  padding: 0 28px 60px;
+}
+
+/* ── GRID SECTION ── */
+.grid-section { margin-top: 22px; }
+.gs-header {
+  display: flex; align-items: center; gap: 9px; margin-bottom: 12px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--text-dim);
+}
+.gs-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.gs-label { font-weight: 600; color: rgba(255,255,255,.6); }
+.gs-count {
+  background: rgba(255,255,255,.06); border-radius: 9px;
+  padding: 1px 8px; font-size: 10px; color: var(--text-dim);
+}
+.gs-closeall {
+  margin-left: auto; font-family: 'Syne', sans-serif; font-size: 10px;
+  text-transform: none; letter-spacing: 0; color: var(--text-dim);
+  background: transparent; border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px; padding: 3px 9px; cursor: pointer; transition: .15s;
+}
+.gs-closeall:hover { color: #fca5a5; border-color: rgba(239,68,68,.4); }
+
+/* ── GRID CARD ── */
+.grid-card {
+  position: relative; border-radius: 14px; overflow: hidden;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+  cursor: pointer; transition: border-color .18s, box-shadow .18s, transform .18s;
+}
+.grid-card:hover {
+  border-color: rgba(139,92,246,.4);
+  box-shadow: 0 0 22px rgba(139,92,246,.16), 0 10px 28px rgba(0,0,0,.4);
+  transform: translateY(-2px);
+}
+.grid-card.is-selected {
+  border-color: var(--violet);
+  box-shadow: 0 0 0 2px var(--violet-soft), 0 0 22px rgba(139,92,246,.25);
+}
+.grid-card.is-stale { opacity: .82; }
+
+.grid-card-image {
+  position: relative;
+  height: 132px; width: 100%; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.grid-card-image.is-fallback { background: rgba(139,92,246,.07); }
+.gci-og { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gci-fav { width: 56px; height: 56px; object-fit: contain; border-radius: 12px; }
+
+.gc-close {
+  position: absolute; top: 8px; right: 8px; width: 24px; height: 24px;
+  border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(0,0,0,.45); backdrop-filter: blur(4px);
+  color: #fff; font-size: 15px; line-height: 1;
+  opacity: 0; transition: opacity .15s, background .15s;
+}
+.grid-card:hover .gc-close { opacity: 1; }
+.gc-close:hover { background: rgba(239,68,68,.7); }
+
+.gc-body { padding: 11px 13px 13px; }
+.gc-meta {
+  font-size: 10px; color: var(--text-dim); margin-bottom: 5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gc-title {
+  font-size: 13px; font-weight: 600; color: #fff; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.gc-desc {
+  font-size: 11px; color: rgba(255,255,255,.45); line-height: 1.5; margin-top: 5px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.gc-stale { font-size: 10px; color: #fca5a5; margin-top: 7px; }
+
+/* ── RESPONSIVE FLOW ── cards hold ~260px and never squish; columns reflow. */
+.grid-flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+/* ── TRIAGE CHIPS ── */
+.ov-chip {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600;
+  border-radius: 14px; padding: 6px 12px; cursor: pointer;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.7); transition: .15s;
+}
+.ov-chip.chip-danger { background: rgba(239,68,68,.14); border-color: rgba(239,68,68,.4); color: #fca5a5; }
+.ov-chip.chip-warn   { background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.4); color: #fbbf24; }
+.ov-chip:hover { filter: brightness(1.15); }
+
+/* ── SELECTION BAR ── */
+.select-bar {
+  display: none; align-items: center; gap: 12px;
+  width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 28px 6px;
+  font-size: 12px; color: rgba(255,255,255,.7);
+}
+.select-bar.show { display: flex; }
+.sb-close, .sb-clear {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600;
+  border-radius: 8px; padding: 5px 11px; cursor: pointer;
+}
+.sb-close { background: rgba(239,68,68,.16); border: 1px solid rgba(239,68,68,.4); color: #fca5a5; }
+.sb-clear { background: transparent; border: 1px solid rgba(255,255,255,.12); color: var(--text-dim); }
+html[data-view="coverflow"] .select-bar { display: none !important; }
+
+/* ── GRID KEYBOARD FOCUS ── */
+.grid-card.kb-focus {
+  border-color: var(--violet);
+  box-shadow: 0 0 0 2px var(--violet-mid), 0 0 24px rgba(139,92,246,.3);
+}
+
+/* ── CARD RELATIVE-AGE PILL (top-left, over the image) ── */
+.gc-age-pill {
+  position: absolute; left: 9px; bottom: 9px; z-index: 2;
+  padding: 5px 12px; border-radius: 13px;
+  background: rgba(0, 0, 0, .55); backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, .14);
+  color: rgba(255, 255, 255, .92);
+  font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: .02em; line-height: 1;
+}
+.gc-age-pill.is-stale-age {
+  background: rgba(239, 68, 68, .28); backdrop-filter: blur(4px);
+  border-color: rgba(239, 68, 68, .55); color: #fecaca;
+}
+
+/* ── GROUP-BY / SORT CONTROLS ── */
+.ov-count { margin-right: auto; }   /* push chips + controls to the right */
+.ov-controls { display: flex; align-items: center; gap: 10px; }
+.ov-group {
+  display: flex; gap: 3px;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.09);
+  border-radius: 10px; padding: 3px;
+}
+.ovg-btn {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600;
+  color: var(--text-dim); background: transparent; border: none;
+  padding: 4px 10px; border-radius: 8px; cursor: pointer; transition: .15s;
+}
+.ovg-btn.is-active { background: var(--violet-soft); color: var(--violet); }
+.ovg-btn:hover:not(.is-active) { color: var(--text); }
+.ov-sort {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600;
+  color: var(--text); background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.09); border-radius: 10px;
+  padding: 5px 8px; cursor: pointer; outline: none;
+}
+.ov-sort option { background: #14121f; color: var(--text); }
+
+.sb-group {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600;
+  border-radius: 8px; padding: 5px 11px; cursor: pointer;
+  background: var(--violet-soft); border: 1px solid rgba(139,92,246,.4); color: var(--violet);
+}
+.sb-group:hover { background: rgba(139,92,246,.3); }
+
+/* ── COVER FLOW: age pill + hover close on tab cards ── */
+.card:hover .gc-close { opacity: 1; }
+.gc-age-pill { pointer-events: none; }
+
+/* ── GRID CARD CLOSE (poof out) ── */
+.grid-card.gc-closing {
+  transform: scale(0.4);
+  opacity: 0;
+  transition: transform .18s cubic-bezier(0.4, 0, 1, 1), opacity .18s ease;
+}
