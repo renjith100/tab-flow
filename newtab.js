@@ -917,7 +917,7 @@ function closeGridTab(tabId) {
     chrome.tabs.remove(tabId, () => {
       void chrome.runtime.lastError; // ignore "no tab" if already gone
       gridSelection.delete(tabId);
-      showUndoToast('Closed 1 tab');
+      showUndoToast('1 tab');
     });
   };
   if (closingEl) animateGridClose(closingEl, remove);
@@ -979,7 +979,7 @@ function closeGridTabs(ids) {
   chrome.tabs.remove(ids, () => {
     void chrome.runtime.lastError; // ignore "no tab" if any already gone
     ids.forEach(id => gridSelection.delete(id));
-    showUndoToast(`Closed ${ids.length} tabs`);
+    showUndoToast(`${ids.length} tabs`);
   });
 }
 
