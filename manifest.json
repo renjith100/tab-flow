@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TabFlow",
-  "description": "Cover Flow tab switcher — find any tab at a glance",
+  "description": "Bring your tab count down — see every tab at a glance, spot stale ones and duplicates, and close the clutter in one click.",
   "version": "2.0.0",
   "homepage_url": "https://github.com/renjith100/tab-flow",
   "action": {

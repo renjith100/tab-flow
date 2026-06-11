@@ -6,34 +6,41 @@ Paste these into the Developer Dashboard. Nothing here ships in the extension; i
 
 ## Short description (max 132 chars)
 
-> See every tab at a glance, close the clutter, and switch fast — a visual Overview grid plus a Cover Flow carousel.
+> Bring your tab count down — see every tab at a glance, spot stale ones and duplicates, and close the clutter in one click.
 
-(127 chars.)
+**Note:** the Web Store summary is read from `manifest.json`'s
+`description` field, not editable in the dashboard — already updated there,
+ships with the 2.0.0 zip.
 
 ---
 
 ## Detailed description
 
-**TabFlow turns your tab chaos into something you can actually act on.**
+**TabFlow has one goal: fewer open tabs.**
 
-Open it and every tab in your current window shows up as a card you can scan, search, and close in one click. When you just want to flip between tabs, switch to the classic 3D Cover Flow carousel. Keyboard-first, fully local, no screenshots of your pages.
+Tabs pile up because you can't see them. TabFlow shows every tab in your window as a card — with how long it's been since you last touched it — so closing stops being a chore: one click closes a tab, one click clears a whole section, one chip sweeps away everything stale or duplicated. The toolbar badge counts your tabs and turns amber, then red, as they pile up. Watching it drop back down is the whole point.
 
-**Overview grid (the new default)**
-• Every tab as a card, grouped into sections — your Chrome tab groups, with loose tabs first
-• Sort by most-recent, oldest, or name
-• A relative-age pill on each card (bright green when fresh, fading to red when a tab's been untouched 7+ days) so you can see what's safe to close
-• One-click triage: "Close all stale" and "Merge duplicates"
+And when you're switching instead of cleaning, the same page doubles as a fast visual tab switcher — including the classic 3D Cover Flow carousel.
+
+**Close with confidence**
+• A relative-age pill on every card — bright green when fresh, fading toward red when a tab's been untouched 7+ days — so you can see what's safe to close
+• One-click triage chips: "Close all stale" and "Merge duplicates"
 • Close any tab with one click — or clear a whole group/section at once
-• A live tab-count badge on the toolbar icon that turns amber, then red, as tabs pile up — a gentle nudge to clean up
-• Tabs playing audio show an animated sound bar, so you can find (or avoid) them
+• Undo (⌘Z / Ctrl+Z) brings back closed tabs — including bulk closes — so cleaning up is risk-free
+• A live tab-count badge on the toolbar icon: amber, then red, as tabs pile up — a gentle nudge to clean house
 
-**Cover Flow carousel**
-• A beautiful full-page 3D switcher
-• Tab groups as stacked cards; drag a card aside to close it with a poof
+**See everything at a glance**
+• Every tab as a card in the Overview grid, organized into sections — your Chrome tab groups, with loose tabs first
+• Group loose tabs by window or by domain; sort by most-recent, oldest, or name
+• Tabs playing audio show an animated sound bar, so you can find (or mute) them
+• Type "/" to filter the grid as you type
+
+**Switch fast**
+• Click any card to jump to that tab
+• Or flip to the full-page 3D Cover Flow carousel — tab groups as stacked cards, drag a card aside to close it with a poof
 
 **Everywhere**
 • Keyboard-first: arrows to move, "/" to search, Enter to switch, Esc/Delete to close
-• Undo (⌘Z / Ctrl+Z) brings back closed tabs — including bulk closes
 • Private by design: no accounts, no analytics, nothing leaves your machine
 
 Default shortcut: ⌘⇧. (Mac) / Ctrl+Shift+. (Windows/Linux) — change it at chrome://extensions/shortcuts
@@ -47,18 +54,24 @@ Default shortcut: ⌘⇧. (Mac) / Ctrl+Shift+. (Windows/Linux) — change it at 
 • NEW: Stale & duplicate detection with one-click bulk close, and relative-age pills
 • NEW: Live tab-count badge on the toolbar icon
 • NEW: Audio indicator now appears in the grid too
+• NEW: Fully redesigned interface — modern typography, refined dark theme, and light favicon chips so dark icons (like GitHub's) stay visible
+• FIXED: Clicking the toolbar icon now opens TabFlow in the window you clicked, even when another window already has TabFlow open
 • Cover Flow is preserved — toggle between the two views anytime; your choice is remembered
 • No new permissions, still zero data collection
 
 ---
 
-## Screenshots to capture (1280×800 PNG)
+## Screenshots (ready to upload — `docs/store-assets-2.0.0/`, 1280×800 PNG)
 
-1. Overview grid full — count + triage chips + several sections of cards
-2. Group-by Domain + the sort control, with age pills visible
-3. Triage chips in action ("N stale · Close all" / "N duplicates · Merge") or a section's "Close all"
-4. A card mid-close (poof) or the toolbar count badge in the chrome
-5. Cover Flow carousel (keep one, so existing users recognize it)
+1. `01-grid-overview.png` — Overview grid, amber "16 tabs open" count, "2 duplicates · Merge" chip, sections of cards (lead with this; it becomes the thumbnail)
+2. `02-grid-by-domain.png` — tab-group sections (Dev/Docs) with age pills and counts
+3. `03-grid-card-hover.png` — card hover state: lift, close button, freshness pill
+4. `04-grid-search.png` — search filtering the grid live
+5. `05-coverflow.png` — Cover Flow carousel with a group card (so existing users recognize it)
+
+Captured with the staged-tabs Playwright script; regenerate by asking Claude or
+re-staging per `screenshots-guide.md`. A toolbar-badge shot still needs a manual
+capture (browser chrome isn't scriptable) — optional.
 
 ## Listing fields that DON'T change
 - Permissions: unchanged (tabs, windows, sessions, tabGroups) — no new permission warning, existing users are not re-prompted
