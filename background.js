@@ -5,18 +5,25 @@
 
 const NEWTAB_URL = 'newtab.html';
 
-chrome.action.onClicked.addListener(async () => {
+// Open (or focus) the TabFlow tab of one specific window. Scoped by windowId
+// rather than currentWindow — in a service worker "current window" is a focus
+// heuristic that can point at another window when several are open.
+async function openTabFlowInWindow(windowId) {
   const url  = chrome.runtime.getURL(NEWTAB_URL);
-  const tabs = await chrome.tabs.query({ url, currentWindow: true });
+  const tabs = await chrome.tabs.query({ url, windowId });
 
   if (tabs.length > 0) {
     // Bring the existing TabFlow tab in this window into focus
     await chrome.tabs.update(tabs[0].id, { active: true });
   } else {
     // Open a fresh TabFlow tab in this window
-    await chrome.tabs.create({ url });
+    await chrome.tabs.create({ url, windowId });
   }
-});
+}
+
+// The event's tab argument is the active tab of the window whose icon was
+// clicked — the one reliable source for which window the user meant.
+chrome.action.onClicked.addListener(tab => openTabFlowInWindow(tab.windowId));
 
 // ── Toolbar tab-count badge ───────────────────────────────────────────────────
 // Reuse countTone() from triage.js (defines globals in the worker scope).
